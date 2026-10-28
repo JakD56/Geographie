@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="color-scheme" content="light dark">
+<title>Kartenquiz</title>
+<style>
+:root{--bg:#f1f5f4;--card:#fff;--ink:#13293d;--mut:#5b7083;--line:#d3dde4;--sea:#9cc5de;--land:#fbfbf8;--edge:#7f9bb0;--dim:#d8e0dc;--acc:#0e6ba8;--ok:#2f9e63;--bad:#d64550;--hint:#f29e4c;--warn:#f6d743}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1a24;--card:#16283a;--ink:#e6eef4;--mut:#8aa0b2;--line:#27405a;--sea:#0a2540;--land:#3a5f7a;--edge:#5a7a92;--dim:#1a2f3f;--acc:#4fa8e0}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:28px;margin:8px 0 2px;letter-spacing:-.02em}
+h2{font-size:15px;margin:22px 0 8px;color:var(--mut);font-weight:600}
+p.s{color:var(--mut);margin:0}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+button,input{font:inherit;color:inherit}
+.chip{border:1.5px solid var(--line);background:var(--card);border-radius:20px;padding:8px 14px;cursor:pointer}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.chip small{opacity:.7;margin-left:6px}
+.chip .x{margin-left:10px;opacity:.7;padding:0 2px}
+.mode{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer}
+.mode.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.mode b{display:block}.mode span{color:var(--mut);font-size:14px}
+.mode:disabled{opacity:.4;cursor:default}
+.btn{border:0;background:var(--acc);color:#fff;border-radius:12px;padding:13px 18px;font-weight:600;cursor:pointer;width:100%;margin-top:8px}
+.btn.g{background:transparent;color:var(--acc);border:1.5px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.bar button{background:none;border:0;color:var(--acc);padding:6px 0;cursor:pointer}
+svg.map{display:block;margin:0 auto;height:auto;background:var(--sea);border-radius:12px;touch-action:none}
+.c{fill:var(--land);stroke:var(--edge);stroke-width:calc(var(--sw,1)*.6px);cursor:pointer}
+.c.dim{fill:var(--dim)}.c.sel{fill:var(--acc);--f:var(--acc)}.c.hint{fill:var(--hint);--f:var(--hint)}.c.ok{fill:var(--ok);--f:var(--ok)}.c.bad{fill:var(--bad);--f:var(--bad)}.c.warn{fill:var(--warn);--f:var(--warn)}
+#prompt{font-size:20px;margin:6px 0 10px;min-height:34px;display:flex;align-items:center;gap:12px}
+#prompt img{height:56px;border:1px solid var(--line);border-radius:4px}
+#prompt img.big{height:110px}
+input[type=text]{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--card)}
+#fb{min-height:24px;margin-top:8px;font-weight:600}
+#fb.ok{color:var(--ok)}#fb.bad{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:right;padding:8px 4px;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}
+.c.bg{fill:var(--dim);pointer-events:none}
+svg.nb .c{stroke:var(--f,var(--land));stroke-width:calc(var(--sw,1)*.9px)}svg.nb .c.dim,svg.nb .c.bg{fill:var(--land)}
+.ol{fill:none;stroke:var(--ink);stroke-width:2.5;stroke-linejoin:round}
+#cv{display:block;width:100%;height:auto;touch-action:none;border:1.5px solid var(--line);border-radius:12px;background:#fff;margin-bottom:8px}
+.sw{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);padding:0;cursor:pointer}.sw.on{outline:3px solid var(--acc);outline-offset:2px}
+.chip.on2{background:var(--acc);color:#fff}
+main.wide{max-width:none}#quiz>:not(svg){max-width:640px;margin-left:auto;margin-right:auto}
+.chip:disabled{opacity:.4;cursor:default}
+#dlg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9}
+#dlg .box{background:var(--card);border-radius:16px;padding:18px;max-width:380px;width:100%}
+svg .c.ln{fill:none;stroke:var(--ink);stroke-width:calc(var(--sw,1)*4px);stroke-linecap:round;stroke-linejoin:round;pointer-events:stroke}
+svg .c.ln.ok{stroke:var(--ok)}svg .c.ln.bad{stroke:var(--bad)}svg .c.ln.warn{stroke:var(--warn)}svg .c.ln.hint{stroke:var(--hint)}
+.c.bg2{fill:var(--land);pointer-events:none}
+.hl{fill:none;stroke:var(--ink);stroke-opacity:.55;stroke-dasharray:3 2;stroke-width:calc(var(--sw,1)*.8px);pointer-events:none}
+#score{font-size:34px;font-weight:700;margin:20px 0 4px;letter-spacing:-.02em}
+</style>
+</head>
+<body>
+<main>
+
+<section id="loading"><h1>Kartenquiz</h1><p class="s" id="loadmsg">Karten werden geladen …</p><button class="btn" id="retry" hidden>Erneut versuchen</button></section>
+
+<section id="home" hidden>
+  <h1>Kartenquiz</h1>
+  <p class="s">Wähle eine Karte und einen Modus.</p>
+  <div class="row" style="margin-top:10px"><button class="chip" id="gostats">Statistik</button><button class="chip" id="gosync">Geräte-Sync</button></div>
+  <h2>Karte</h2><div class="row" id="maps"></div>
+  <p class="s" id="note" style="margin-top:6px"></p>
+  <h2>Eigene Quizze</h2><div class="row" id="qs"></div>
+  <h2>Schwierigkeit</h2><div class="row" id="diffs"></div>
+  <h2>Modus</h2><div class="row" id="grps" style="margin-bottom:10px"></div><div id="modes"></div>
+  <button class="btn" id="start">Starten</button>
+  <button class="btn g" id="newq" style="margin-top:28px">+ Neues Quiz erstellen</button>
+</section>
+
+<section id="quiz" hidden>
+  <div class="bar"><button id="quit">‹ Beenden</button><span id="prog"></span></div>
+  <div id="prompt"></div>
+  <svg id="qsvg" class="map"></svg>
+  <svg id="osvg" class="map" viewBox="0 0 400 300" style="width:min(100%,69vh)" hidden></svg>
+  <div id="draw" hidden>
+    <canvas id="cv" width="600" height="400"></canvas>
+    <div class="row" id="pal"></div>
+    <div class="row" style="margin:8px 0;align-items:center;flex-wrap:nowrap"><input type="color" id="cpick" value="#d62828" style="width:48px;height:38px;border:0;padding:0;background:none"><input type="range" id="bsz" min="2" max="40" value="8" style="flex:1"><span id="bszv" style="width:24px">8</span></div>
+    <div class="row" style="margin-top:8px"><button class="chip" id="tfill">Farbeimer</button><button class="chip" id="tundo">Zurück</button><button class="chip" id="tclr">Leeren</button></div>
+    <button class="btn" id="tdone">Fertig – Lösung zeigen</button>
+    <div id="dres" hidden><div id="dflag" style="margin:10px 0"></div><button class="btn" id="dok">Passt ✓</button><button class="btn g" id="dno">Daneben ✗</button></div>
+  </div>
+  <form id="tf" autocomplete="off" hidden>
+    <input type="text" id="ans" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Antwort eintippen">
+    <div id="fb"></div>
+    <button class="btn" id="go">Prüfen</button>
+  </form>
+</section>
+
+<section id="edit" hidden>
+  <div class="bar"><button id="ecancel">‹ Abbrechen</button><span id="ecount"></span></div>
+  <h1 id="etitle">Neues Quiz</h1>
+  <input type="text" id="qname" placeholder="Name des Quiz">
+  <h2>Kartenausschnitt</h2><div class="row" id="emaps"></div>
+  <h2>Tippe auf der Karte an, was ins Quiz soll</h2>
+  <p class="s" id="enames" style="margin-bottom:8px"></p>
+  <svg id="esvg" class="map"></svg>
+  <div class="row" style="margin-top:8px"><button class="chip" id="eall">Alle</button><button class="chip" id="enone">Keine</button></div>
+  <button class="btn" id="esave">Quiz speichern</button>
+  <button class="btn g" id="edel" style="color:var(--bad)" hidden>Quiz löschen</button>
+</section>
+
+<section id="stats" hidden>
+  <div class="bar"><button class="back">‹ Zurück</button></div><h1>Statistik</h1>
+  <div class="row" id="sgroups" style="margin:10px 0"></div><div id="stable"></div>
+</section>
+
+<section id="sync" hidden>
+  <div class="bar"><button class="back">‹ Zurück</button></div><h1>Geräte-Sync</h1>
+  <p class="s" style="margin-bottom:12px">Quizze und Statistik werden in einem privaten GitHub-Gist gespeichert. Erstelle auf github.com/settings/tokens ein „Token (classic)“ nur mit der Berechtigung „gist“ und trage es auf jedem Gerät einmal ein.</p>
+  <input type="text" id="tok" placeholder="GitHub-Token" autocapitalize="off" autocorrect="off" spellcheck="false">
+  <button class="btn" id="tokgo">Verbinden und synchronisieren</button>
+  <button class="btn g" id="tokoff">Trennen</button>
+  <p class="s" id="syncmsg" style="margin-top:10px"></p>
+</section>
+
+<section id="result" hidden>
+  <div id="score"></div>
+  <div id="miss"></div>
+  <button class="btn" id="again" hidden>Fehler wiederholen</button>
+  <button class="btn g" id="redo">Nochmal von vorn</button>
+  <button class="btn g" id="tohome">Zur Startseite</button>
+</section>
+
+</main>
+<div id="dlg" hidden><div class="box"><p id="dmsg" style="margin:0 0 6px"></p><button class="btn" id="dyes">OK</button><button class="btn g" id="dcan">Abbrechen</button></div></div>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+const WORLD=['https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json','https://unpkg.com/world-atlas@2.0.2/countries-50m.json','https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json'],
+REST=['https://cdn.jsdelivr.net/npm/world-countries@5/countries.json','https://restcountries.com/v3.1/all?fields=name,translations,capital,cca2,ccn3,region,subregion,unMember,area'],
+DE=['https://cdn.jsdelivr.net/gh/isellsoap/deutschlandGeoJSON@main/2_bundeslaender/3_mittel.geo.json','https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/3_mittel.geo.json','https://cdn.jsdelivr.net/gh/isellsoap/deutschlandGeoJSON@main/2_bundeslaender/4_niedrig.geo.json','https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/4_niedrig.geo.json'];
+const getJSON=async us=>{const er=[];for(const u of us){try{const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}catch(e){er.push(new URL(u).hostname+': '+e.message)}}throw new Error(er.join(' | '))};
+
+const MAPS={world:{n:'Welt (UN)',b:[[-180,-58],[180,84]]},worldx:{n:'Welt ohne Inselstaaten',b:[[-180,-58],[180,84]]},eu:{n:'Europa',b:[[-25,34],[45,72]]},as:{n:'Asien',b:[[25,-11],[150,78]]},af:{n:'Afrika',b:[[-27,-36],[60,38]]},na:{n:'Nordamerika',b:[[-170,6],[-50,75]]},sa:{n:'Südamerika',b:[[-85,-57],[-33,14]]},oc:{n:'Ozeanien',b:[[110,-48],[210,15]],rot:150},de:{n:'Deutschland',b:[[5.8,47.2],[15.2,55.1]]}};
+const MODES=[
+ {k:'cn',t:'Name → anklicken',d:'Der Name wird gezeigt, du tippst auf die Karte.'},
+ {k:'cf',t:'Flagge → anklicken',d:'Eine Flagge wird gezeigt, du suchst das Land.',iso:1},
+ {k:'tn',t:'Markiert → Name tippen',d:'Ein Gebiet leuchtet auf, du schreibst den Namen.'},
+ {k:'cc',t:'Hauptstadt → anklicken',d:'Die Hauptstadt wird gezeigt, du suchst das Land.',cap:1},
+ {k:'tc',t:'Markiert → Hauptstadt tippen',d:'Ein Gebiet leuchtet auf, du schreibst die Hauptstadt.',cap:1},
+ {k:'tf',t:'Flagge → Name tippen',d:'Eine Flagge wird gezeigt, du schreibst den Namen.',iso:1,nomap:1},
+ {k:'to',t:'Umriss → Name tippen',d:'Nur die Außengrenze wird gezeigt.',nomap:1},
+ {k:'df',t:'Name → Flagge malen',d:'Du malst die Flagge, danach siehst du die echte.',iso:1,nomap:1},
+ {k:'ab',t:'Autobahn → anklicken',d:'A1 bis A9 auf der Karte finden (schematischer Verlauf).',fixed:'ab'}
+];
+const GR=['Länder','Flaggen','Hauptstädte','Umriss','Deutschland'],MG={ab:'Deutschland',cn:'Länder',tn:'Länder',cf:'Flaggen',tf:'Flaggen',df:'Flaggen',cc:'Hauptstädte',tc:'Hauptstädte',to:'Umriss'};
+MODES.forEach(m=>m.g=MG[m.k]);
+const ABW={1:[[11.22,54.5],[10.69,53.87],[9.99,53.55],[8.8,53.08],[8.05,52.28],[7.63,51.96],[7.47,51.51],[6.96,50.94],[6.79,50.66],[6.64,49.76],[7,49.24]],
+2:[[6.85,51.47],[7.82,51.68],[8.53,52.02],[9.73,52.37],[10.52,52.27],[11.63,52.13],[13.4,52.52]],
+3:[[6.25,51.83],[6.85,51.47],[6.96,50.94],[8.06,50.39],[8.68,50.11],[9.93,49.79],[11.08,49.45],[12.1,49.02],[13.46,48.57]],
+4:[[6.08,50.78],[6.96,50.94],[7.85,51.03],[9.57,50.82],[10.32,50.97],[11.03,50.98],[12.08,50.88],[12.92,50.83],[13.74,51.05],[14.99,51.15]],
+5:[[9.17,50.74],[8.67,50.58],[8.68,50.11],[8.65,49.87],[8.69,49.4],[8.4,49.01],[7.94,48.47],[7.85,48],[7.59,47.56]],
+6:[[7,49.24],[7.77,49.44],[8.47,49.49],[9.22,49.14],[11.08,49.45],[11.86,49.44],[12.49,49.65]],
+7:[[9.44,54.78],[9.99,53.55],[9.73,52.37],[9.93,51.53],[9.49,51.31],[9.68,50.55],[9.93,49.79],[9.99,48.4],[10.31,47.73],[10.7,47.57]],
+8:[[6.4,49.45],[7.37,49.25],[8.4,49.01],[9.18,48.78],[9.99,48.4],[10.9,48.37],[11.58,48.14],[12.13,47.86],[12.88,47.73]],
+9:[[13.4,52.52],[12.25,51.83],[12.37,51.34],[11.92,50.32],[11.58,49.94],[11.08,49.45],[11.42,48.76],[11.58,48.14]]};
+const ABI=Object.entries(ABW).map(([n,c])=>({id:'ab'+n,name:'A '+n,alt:[],cap:null,capalt:[],iso:null,cc:'',ln:1,f:{type:'Feature',geometry:{type:'LineString',coordinates:c}}}));
+const HL=new Set('bs mv sc cv km mh fm pw tv vu sb st ag kn vc tt bh mu'.split(' '));
+const DECAP={Warsaw:'Warschau',Moscow:'Moskau',Prague:'Prag',Vienna:'Wien',Rome:'Rom',Brussels:'Brüssel',Copenhagen:'Kopenhagen',Athens:'Athen',Lisbon:'Lissabon',Bucharest:'Bukarest',Cairo:'Kairo',Beijing:'Peking',Belgrade:'Belgrad',Kyiv:'Kiew',Havana:'Havanna','Mexico City':'Mexiko-Stadt',Nicosia:'Nikosia',Luxembourg:'Luxemburg',Baghdad:'Bagdad',Damascus:'Damaskus',Tehran:'Teheran',Yerevan:'Eriwan',Tashkent:'Taschkent',Pyongyang:'Pjöngjang','New Delhi':'Neu-Delhi','Addis Ababa':'Addis Abeba',Algiers:'Algier',Khartoum:'Khartum',Mogadishu:'Mogadischu','Cape Town':'Kapstadt',Muscat:'Maskat'};
+const DELAND={'Baden-Württemberg':'Stuttgart','Bayern':'München','Berlin':'Berlin','Brandenburg':'Potsdam','Bremen':'Bremen','Hamburg':'Hamburg','Hessen':'Wiesbaden','Mecklenburg-Vorpommern':'Schwerin','Niedersachsen':'Hannover','Nordrhein-Westfalen':'Düsseldorf','Rheinland-Pfalz':'Mainz','Saarland':'Saarbrücken','Sachsen':'Dresden','Sachsen-Anhalt':'Magdeburg','Schleswig-Holstein':'Kiel','Thüringen':'Erfurt'};
+
+const $=s=>document.querySelector(s);
+const show=id=>{['loading','home','quiz','edit','result','stats','sync'].forEach(s=>$('#'+s).hidden=s!==id);$('main').classList.toggle('wide',id==='quiz');scrollTo(0,0)};
+let DCB=null;
+const ask=(msg,yes,cb)=>{$('#dmsg').textContent=msg;$('#dyes').textContent=yes;$('#dyes').style.background=yes==='OK'?'':'var(--bad)';$('#dcan').hidden=yes==='OK';DCB=cb;$('#dlg').hidden=false};
+const info=m=>ask(m,'OK',null);
+const vis=(el,on)=>el.toggleAttribute('hidden',!on);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
+const shuffle=a=>{a=[...a];for(let i=a.length;i;){const j=Math.random()*i--|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const norm=s=>s.toLowerCase().replace(/ß/g,'ss').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'').replace(/ae|oe|ue/g,m=>m[0]);
+function lev(a,b){const d=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length]}
+const match=(a,b)=>{a=norm(a);b=norm(b);return a===b||(b.length>=6&&lev(a,b)<=1)};
+
+const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}},store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let QS=ld('geo.quizzes',[]),H=ld('geo.hist',[]),DEL=ld('geo.del',[]),SY=ld('geo.sync',{}),T,ST;
+const persist=()=>{store('geo.quizzes',QS);store('geo.hist',H);store('geo.del',DEL)};
+const saveQS=()=>{persist();queueSync()};
+const queueSync=()=>{if(!SY.tok)return;clearTimeout(T);T=setTimeout(()=>sync().catch(()=>{}),1200)};
+
+/* ---------- Daten ---------- */
+const byMap={},HIDE=new Set();
+const ISL=new Set('pw fm mh nr ki tv to ws gd vc lc dm bb ag kn'.split(' ')),EXTRA=new Set('xk eh ps tw pr va'.split(' '));
+const DEID={BW:'Baden-Württemberg',BY:'Bayern',BE:'Berlin',BB:'Brandenburg',HB:'Bremen',HH:'Hamburg',HE:'Hessen',MV:'Mecklenburg-Vorpommern',NI:'Niedersachsen',NW:'Nordrhein-Westfalen',RP:'Rheinland-Pfalz',SL:'Saarland',SN:'Sachsen',ST:'Sachsen-Anhalt',SH:'Schleswig-Holstein',TH:'Thüringen'};
+const DEEN={Bavaria:'Bayern','Lower Saxony':'Niedersachsen',Hesse:'Hessen',Saxony:'Sachsen','Saxony-Anhalt':'Sachsen-Anhalt',Thuringia:'Thüringen','North Rhine-Westphalia':'Nordrhein-Westfalen','Rhineland-Palatinate':'Rheinland-Pfalz','Mecklenburg-Western Pomerania':'Mecklenburg-Vorpommern'};
+const fixW=f=>{
+  if(!f.geometry||d3.geoArea(f)<=2*Math.PI)return f;
+  const rv=g=>g.type==='Polygon'?{type:'Polygon',coordinates:g.coordinates.map(x=>x.slice().reverse())}:{type:'MultiPolygon',coordinates:g.coordinates.map(p=>p.map(x=>x.slice().reverse()))};
+  return Object.assign({},f,{geometry:rv(f.geometry)});
+};
+function build(topo,countries,de){
+  const cm={};countries.forEach(c=>cm[c.ccn3]=c);
+  const gs=topo.objects.countries.geometries;
+  const cy=gs.find(g=>String(g.id)==='196'),nc=gs.find(g=>g.properties&&g.properties.name==='N. Cyprus');
+  let uaM=null;
+  const ruG=gs.find(g=>String(g.id)==='643'),uaG=gs.find(g=>String(g.id)==='804');
+  if(ruG&&uaG&&ruG.type==='MultiPolygon'){
+    const cr=ruG.arcs.filter(a=>{const c=d3.geoCentroid(topojson.feature(topo,{type:'Polygon',arcs:a}));return c[0]>32&&c[0]<37&&c[1]>44&&c[1]<46.5});
+    if(cr.length){
+      ruG.arcs=ruG.arcs.filter(a=>!cr.includes(a));
+      uaG.arcs=(uaG.type==='Polygon'?[uaG.arcs]:uaG.arcs).concat(cr);uaG.type='MultiPolygon';
+      uaM=topojson.merge(topo,[uaG]);
+    }
+  }
+  let feats=topojson.feature(topo,topo.objects.countries).features.filter(f=>f.properties.name!=='Antarctica');
+  if(uaM)feats=feats.map(f=>String(f.id)==='804'?Object.assign({},f,{geometry:fixW({type:'Feature',geometry:uaM}).geometry}):f);
+  if(cy&&nc){
+    const mg=topojson.merge(topo,[cy,nc]);
+    feats=feats.filter(f=>f.properties.name!=='N. Cyprus').map(f=>String(f.id)==='196'?{type:'Feature',id:f.id,properties:f.properties,geometry:mg}:f);
+  }
+  byMap.bgf=feats;
+  const all=[];
+  feats.forEach(f=>{
+    const c=cm[String(f.id).padStart(3,'0')];
+    if(!c){
+      if(f.properties.name==='Kosovo')all.push({id:'wxk',name:'Kosovo',alt:[],cap:'Pristina',capalt:['Priština','Prishtina'],iso:'xk',cc:'xk',cont:'eu',un:false,f});
+      return;
+    }
+    const r=c.region,s=c.subregion,cca=c.cca2.toLowerCase();
+    const cont=r==='Europe'?'eu':r==='Asia'?'as':r==='Africa'?'af':r==='Oceania'?'oc':r==='Americas'?(s==='South America'?'sa':'na'):null;
+    if(!cont)return;
+    const cap=(c.capital||[])[0];
+    all.push({id:'w'+c.ccn3,name:(c.translations&&c.translations.deu&&c.translations.deu.common)||c.name.common,alt:[c.name.common],cap:cap&&(DECAP[cap]||cap),capalt:cap?[cap]:[],iso:cca,cc:cca,cont,f,un:!!c.unMember});
+  });
+  all.filter(i=>ISL.has(i.cc)).forEach(i=>HIDE.add(i.f));
+  byMap.ab=ABI;
+  byMap.world=all.filter(i=>i.un);
+  byMap.worldx=all.filter(i=>(i.un&&!ISL.has(i.cc))||EXTRA.has(i.cc));
+  ['eu','as','af','na','sa','oc'].forEach(k=>byMap[k]=all.filter(i=>(i.un||EXTRA.has(i.cc))&&i.cont===k));
+  byMap.de=de.features.map(fixW).map(f=>{
+    const p=f.properties||{},k=String(p.id||p.iso_3166_2||p['ISO3166-2']||'').toUpperCase().replace(/^DE-/,'');
+    const n=DEID[k]||DEEN[p.name]||p.name||p.NAME_1;
+    return{id:'d:'+n,name:n,alt:[],cap:DELAND[n],capalt:[],iso:null,cc:'',f};
+  }).filter(i=>i.name);
+}
+
+/* ---------- Karte ---------- */
+const pts=([[w,s],[e,n]])=>{const o=[];for(let t=0;t<=6;t++){const x=w+(e-w)*t/6,y=s+(n-s)*t/6;o.push([x,s],[x,n],[w,y],[e,y])}return o};
+const grow=([[w,s],[e,n]],L)=>{const dx=(e-w)*.08,dy=(n-s)*.08;return[[Math.max(-180,w-dx),Math.max(-80,s-dy)],[Math.min(L,e+dx),Math.min(85,n+dy)]]};
+function fitBox(it){
+  let[[w,s],[e,n]]=d3.geoBounds({type:'FeatureCollection',features:it.map(i=>i.f)});
+  if(w>e){w=-180;e=180}
+  const px=Math.max(0,(14-(e-w))/2),py=Math.max(0,(9-(n-s))/2),m=Math.max(2,(e-w)*.06);
+  return[[Math.max(-180,w-m-px),Math.max(-80,s-m-py)],[Math.min(180,e+m+px),Math.min(84,n+m+py)]];
+}
+function mkMap(svg,key,fs,fit){
+  const items=byMap[key],mw=Math.round($('main').clientWidth),[W,H]=fs?[mw,Math.round(Math.min(Math.max(260,innerHeight-fs),mw*1.6))]:key==='de'?[560,720]:[800,520],m=MAPS[key]||{b:[[5.8,47.2],[15.2,55.1]]};
+  const pr=key==='de'||key==='ab'?d3.geoMercator():d3.geoNaturalEarth1();
+  if(m.rot)pr.rotate([-m.rot,0]);
+  if(fit)pr.fitSize([W,H],{type:'MultiPoint',coordinates:pts(fitBox(fit))});
+  else if(m.b)pr.fitSize([W,H],{type:'MultiPoint',coordinates:pts(grow(m.b,m.rot?400:180))});
+  else if(key==='de')pr.fitSize([W,H],{type:'FeatureCollection',features:items.map(i=>i.f)});
+  else pr.fitSize([W,H],{type:'Sphere'});
+  const path=d3.geoPath(pr),root=d3.select(svg);
+  root.selectAll('*').remove();
+  root.attr('viewBox','0 0 '+W+' '+H).style('width',fs?'calc(100% + 32px)':'min(100%,'+(52*W/H).toFixed(1)+'vh)').style('margin',fs?'0 -16px':null);
+  const g=root.append('g');
+  const own=new Set(items.map(i=>i.f));
+  g.append('g').selectAll('path').data(byMap.bgf.filter(f=>!own.has(f)&&!(key==='worldx'&&HIDE.has(f)))).join('path').attr('d',path).attr('class','c bg');
+  if(key==='ab'){
+    const g0=byMap.de.length?byMap.de:[{f:byMap.bgf.find(f=>String(f.id)==='276')}];
+    g.append('g').selectAll('path').data(g0).join('path').attr('d',d=>path(d.f)).attr('class','c bg2');
+  }
+  const hl=items.filter(i=>HL.has(i.cc)&&i.f.geometry.type==='MultiPolygon'&&i.f.geometry.coordinates.length>1).map(i=>{
+    const q=[];i.f.geometry.coordinates.forEach(pl=>pl[0].forEach(c=>{const z=pr(c);if(z)q.push(z)}));
+    const h=d3.polygonHull(q);if(!h)return null;
+    const cx=d3.mean(h,z=>z[0]),cy=d3.mean(h,z=>z[1]);
+    const hp=h.map(z=>{const dx=z[0]-cx,dy=z[1]-cy,l=Math.hypot(dx,dy)||1;return[z[0]+dx/l*4,z[1]+dy/l*4]});
+    const xs=hp.map(z=>z[0]),ys=hp.map(z=>z[1]);
+    return{d:'M'+hp.map(z=>z[0].toFixed(1)+','+z[1].toFixed(1)).join('L')+'Z',sz:Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))};
+  }).filter(h=>h&&h.sz<80);
+  const hsel=g.append('g').selectAll('path').data(hl).join('path').attr('d',d=>d.d).attr('class','hl');
+  const lay=g.append('g');
+  lay.selectAll('path').data(items).join('path').attr('d',d=>path(d.f)).attr('class',d=>'c'+(d.ln?' ln':''));
+  const szm=new Map(),sm=items.filter(i=>{if(i.ln)return false;const[[x0,y0],[x1,y1]]=path.bounds(i.f),z=Math.max(x1-x0,y1-y0);szm.set(i,z);return z<12});
+  const circ=lay.selectAll('circle').data(sm).join('circle').attr('cx',d=>path.centroid(d.f)[0]).attr('cy',d=>path.centroid(d.f)[1]).attr('r',3).attr('class','c');
+  const sel=lay.selectAll('.c');
+  const zoom=d3.zoom().scaleExtent([1,40]).extent([[0,0],[W,H]]).translateExtent([[0,0],[W,H]]).on('zoom',e=>{g.attr('transform',e.transform);g.style('--sw',1/e.transform.k);const k=e.transform.k;circ.attr('r',(3+3*Math.min(1,(k-1)/3))/k).attr('display',d=>szm.get(d)*k<12?null:'none');hsel.attr('display',d=>d.sz*k<45?null:'none')});
+  root.call(zoom).call(zoom.transform,d3.zoomIdentity);
+  return{sel,
+    reset(){root.transition().duration(300).call(zoom.transform,d3.zoomIdentity)},
+    zoomTo(d){const[[x0,y0],[x1,y1]]=path.bounds(d.f),k=Math.max(1,Math.min(5,.2/Math.max((x1-x0)/W,(y1-y0)/H)));
+      root.transition().duration(400).call(zoom.transform,d3.zoomIdentity.translate(W/2-k*(x0+x1)/2,H/2-k*(y0+y1)/2).scale(k))}};
+}
+
+/* ---------- Startseite ---------- */
+const S={map:'world',mode:'cn',diff:'n'};
+function curItems(){
+  if(S.map.startsWith('q:')){
+    const q=QS.find(x=>'q:'+x.id===S.map);
+    if(q){const s=new Set(q.ids);return{items:byMap[q.map].filter(i=>s.has(i.id)),key:q.map}}
+    S.map='world';
+  }
+  return{items:byMap[S.map],key:S.map};
+}
+const chip=(k,n,c,x)=>'<button class="chip '+(S.map===k?'on':'')+'" data-map="'+k+'">'+esc(n)+(c?'<small>'+c+'</small>':'')+(x?'<span class="x" data-edit="'+k.slice(2)+'">✎</span>':'')+'</button>';
+const okm=m=>m.fixed?S.map==='de':curItems().items.some(i=>(!m.iso||i.iso)&&(!m.cap||i.cap));
+function renderHome(){
+  const{items}=curItems();
+  const ok=okm;
+  if(!ok(MODES.find(m=>m.k===S.mode)))S.mode=(MODES.find(ok)||MODES[0]).k;
+  const cg=MODES.find(m=>m.k===S.mode).g;
+  $('#grps').innerHTML=GR.map(g=>'<button class="chip '+(cg===g?'on':'')+'" data-grp="'+g+'" '+(MODES.some(m=>m.g===g&&ok(m))?'':'disabled')+'>'+g+'</button>').join('');
+  $('#maps').innerHTML=Object.entries(MAPS).map(([k,m])=>chip(k,m.n)).join('');
+  $('#qs').innerHTML=QS.length?QS.map(q=>chip('q:'+q.id,q.name,q.ids.length,1)).join(''):'<p class="s">Noch keine eigenen Quizze.</p>';
+  $('#diffs').innerHTML=[['n','Normal'],['h','Hard'],['b','Ohne Grenzen']].map(([k,n])=>'<button class="chip '+(S.diff===k?'on':'')+'" data-diff="'+k+'">'+n+'</button>').join('');
+  $('#modes').innerHTML=MODES.filter(m=>m.g===cg).map(m=>'<button class="mode '+(S.mode===m.k?'on':'')+'" data-mode="'+m.k+'" '+(ok(m)?'':'disabled')+'><b>'+m.t+'</b><span>'+m.d+'</span></button>').join('');
+}
+document.addEventListener('click',e=>{
+  let b;const t=e.target;
+  if(b=t.closest('[data-edit]')){const q=QS.find(x=>x.id===b.dataset.edit);if(q)openEdit(q);return}
+  if(b=t.closest('[data-map]')){S.map=b.dataset.map;renderHome()}
+  else if(b=t.closest('.mode:not(:disabled)')){S.mode=b.dataset.mode;renderHome()}
+  else if(b=t.closest('[data-grp]:not(:disabled)')){S.mode=MODES.find(m=>m.g===b.dataset.grp&&okm(m)).k;renderHome()}
+  else if(b=t.closest('[data-diff]')){S.diff=b.dataset.diff;renderHome()}
+  else if(b=t.closest('[data-sg]')){ST=b.dataset.sg;renderStats()}
+  else if(b=t.closest('[data-col]')){DR.c=b.dataset.col;pal()}
+  else if(b=t.closest('[data-emap]')){E.map=b.dataset.emap;E.sel=new Set();renderEdit()}
+});
+$('#start').onclick=()=>{const mo=MODES.find(m=>m.k===S.mode);if(mo.fixed)return startGame(byMap[mo.fixed],mo.fixed,S.mode);const c=curItems();startGame(c.items,c.key,S.mode)};
+$('#newq').onclick=()=>openEdit();
+$('#tohome').onclick=$('#quit').onclick=()=>{G=null;renderHome();show('home')};
+
+/* ---------- Quiz erstellen ---------- */
+let E;
+function openEdit(q){
+  E=q?{map:q.map,sel:new Set(q.ids),id:q.id}:{map:'world',sel:new Set()};
+  $('#qname').value=q?q.name:'';$('#etitle').textContent=q?'Quiz bearbeiten':'Neues Quiz';$('#edel').hidden=!q;
+  renderEdit();show('edit');
+}
+function renderEdit(){
+  $('#emaps').innerHTML=Object.entries(MAPS).map(([k,m])=>'<button type="button" class="chip '+(E.map===k?'on':'')+'" data-emap="'+k+'">'+m.n+'</button>').join('');
+  E.m=mkMap($('#esvg'),E.map);
+  E.m.sel.on('click',(e,d)=>{E.sel.has(d.id)?E.sel.delete(d.id):E.sel.add(d.id);paint()});
+  paint();
+}
+function paint(){E.m.sel.classed('sel',d=>E.sel.has(d.id));$('#ecount').textContent=E.sel.size+' von '+byMap[E.map].length;$('#enames').textContent=byMap[E.map].filter(i=>E.sel.has(i.id)).map(i=>i.name).sort((a,b)=>a.localeCompare(b,'de')).join(', ')}
+$('#eall').onclick=()=>{byMap[E.map].forEach(i=>E.sel.add(i.id));paint()};
+$('#enone').onclick=()=>{E.sel.clear();paint()};
+$('#ecancel').onclick=()=>show('home');
+$('#esave').onclick=()=>{
+  if(E.sel.size<2)return info('Wähle mindestens 2 Einträge auf der Karte aus.');
+  const name=$('#qname').value.trim()||'Quiz '+(QS.length+1),ids=[...E.sel];
+  let q=E.id&&QS.find(x=>x.id===E.id);
+  if(q)Object.assign(q,{name,map:E.map,ids,m:Date.now()});
+  else{q={id:Date.now().toString(36),name,map:E.map,ids,m:Date.now()};QS.push(q)}
+  saveQS();S.map='q:'+q.id;renderHome();show('home');
+};
+$('#edel').onclick=()=>{
+  const q=QS.find(x=>x.id===E.id);if(!q)return;
+  ask('Quiz „'+q.name+'“ wirklich löschen? Das lässt sich nicht rückgängig machen.','Löschen',()=>{
+    QS=QS.filter(x=>x!==q);DEL.push(q.id);if(S.map==='q:'+q.id)S.map='world';saveQS();renderHome();show('home');
+  });
+};
+
+/* ---------- Spiel ---------- */
+let G=null;
+const FS=iso=>['https://cdn.jsdelivr.net/npm/flag-icons@7/flags/4x3/'+iso+'.svg','https://flagcdn.com/w320/'+iso+'.png'];
+const emo=iso=>String.fromCodePoint(...[...iso.toUpperCase()].map(c=>127397+c.charCodeAt(0)));
+const flag=(it,big)=>'<img'+(big?' class="big"':'')+' alt="" src="'+FS(it.iso)[0]+'" data-iso="'+it.iso+'" data-n="1" onerror="flagErr(this)">';
+function flagErr(im){
+  const n=+im.dataset.n,l=FS(im.dataset.iso);
+  if(n<l.length){im.dataset.n=n+1;im.src=l[n];return}
+  const sp=document.createElement('span');sp.textContent=emo(im.dataset.iso);sp.style.cssText='line-height:1;font-size:'+(im.classList.contains('big')?96:44)+'px';im.replaceWith(sp);
+}
+function startGame(items,key,mode,only){
+  const mo=MODES.find(m=>m.k===mode);
+  const pool=(only||items).filter(i=>(!mo.iso||i.iso)&&(!mo.cap||i.cap));
+  if(!pool.length)return;
+  G={items,key,mo,q:shuffle(pool),set:new Set(items),diff:S.diff,marks:{},sm:S.map,only:!!only,i:0,ok:0,miss:[],tries:0,busy:false,w:key==='de'?'Bundesland':'Land'};
+  show('quiz');
+  vis($('#qsvg'),!mo.nomap);
+  $('#tf').hidden=!mo.k.startsWith('t');
+  vis($('#osvg'),mo.k==='to');$('#draw').hidden=mo.k!=='df';
+  G.map=mkMap($('#qsvg'),key,mo.k[0]==='t'?340:240,items!==byMap[key]?items:null);
+  d3.select('#qsvg').classed('nb',G.diff==='b'&&mo.k!=='ab');
+  G.map.sel.on('click',(e,d)=>pick(d));
+  next();
+}
+function prog(){$('#prog').textContent=Math.min(G.i+1,G.q.length)+' / '+G.q.length+' · ✓ '+G.ok}
+function next(f){
+  if(G.i>=G.q.length)return finish();
+  const it=G.cur=G.q[G.i],k=G.mo.k;
+  G.tries=0;G.busy=false;G.done=false;
+  G.map.sel.attr('class',d=>'c'+(d.ln?' ln':'')+(G.set.has(d)?'':' dim')+(G.diff!=='h'&&G.marks[d.id]?' '+G.marks[d.id]:''));
+  G.map.reset();
+  $('#prompt').innerHTML=
+    k==='ab'?'Finde die Autobahn <b>'+esc(it.name)+'</b>':
+    k==='cn'?'Finde: <b>'+esc(it.name)+'</b>':
+    k==='cf'?flag(it)+'<span>Wo liegt dieses Land?</span>':
+    k==='cc'?'Hauptstadt: <b>'+esc(it.cap)+'</b> – in welchem '+G.w+'?':
+    k==='tn'?'Wie heißt das markierte '+G.w+'?':
+    k==='tc'?'Wie heißt die Hauptstadt?':
+    k==='to'?'Welches '+G.w+' ist das?':
+    k==='df'?'Male die Flagge: <b>'+esc(it.name)+'</b>':
+    flag(it,1)+'<span>Wie heißt dieses Land?</span>';
+  if(k==='to')outline(it);
+  if(k==='df')initDraw();
+  if(k[0]==='t'){
+    $('#ans').value='';$('#ans').readOnly=false;$('#fb').textContent='';$('#fb').className='';$('#go').textContent='Prüfen';
+    if(!G.mo.nomap){G.map.sel.filter(d=>d===it).attr('class','c hint');G.map.zoomTo(it)}
+    if(f===true)$('#ans').focus();
+  }
+  prog();
+}
+function adv(ms){G.busy=true;const it=G.cur;setTimeout(()=>{if(G&&G.cur===it){G.i++;next()}},ms)}
+function pick(d){
+  if(!G||G.mo.k[0]==='t'||G.busy||!G.set.has(d)||(G.diff!=='h'&&G.marks[d.id]))return;
+  const cl=(x,c)=>G.map.sel.filter(y=>y===x).classed(c,true);
+  if(d===G.cur){
+    const kk=G.tries?'warn':'ok';cl(d,kk);G.marks[d.id]=kk;if(!G.tries)G.ok++;prog();adv(700);
+  }else{
+    G.tries++;
+    if(G.tries===1)G.miss.push(G.cur);
+    cl(d,'bad');
+    if(G.tries>=2){cl(G.cur,'ok');G.marks[G.cur.id]='bad';adv(1400)}
+    else setTimeout(()=>G.map.sel.filter(y=>y===d).classed('bad',false),500);
+  }
+}
+$('#tf').onsubmit=e=>{
+  e.preventDefault();if(!G)return;
+  if(G.done){G.i++;return next()}
+  const it=G.cur,v=$('#ans').value.trim();if(!v)return;
+  const tc=G.mo.k==='tc',c=tc?[it.cap,...it.capalt]:[it.name,...it.alt];
+  const ok=c.some(x=>match(v,x));
+  G.done=true;$('#ans').readOnly=true;
+  $('#fb').className=ok?'ok':'bad';
+  $('#fb').textContent=ok?'Richtig!':'Richtig wäre: '+(tc?it.cap:it.name);
+  if(!G.mo.nomap)G.map.sel.filter(d=>d===it).attr('class','c '+(ok?'ok':'bad'));
+  G.marks[it.id]=ok?'ok':'bad';
+  if(ok)G.ok++;else G.miss.push(it);
+  $('#go').textContent='Weiter';prog();
+  if(ok)setTimeout(()=>{if(G&&G.cur===it&&G.done){G.i++;next(true)}},800);
+};
+function finish(){
+  if(!G.only){H.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now(),map:G.sm,mode:G.mo.k,diff:G.diff,ok:G.ok,n:G.q.length});saveQS()}
+  $('#score').textContent=G.ok+' von '+G.q.length+' richtig';
+  $('#miss').innerHTML=G.miss.length?'<h2>Nochmal üben</h2><p>'+G.miss.map(i=>esc(i.name)).join(', ')+'</p>':'<p class="s">Alles richtig – stark!</p>';
+  $('#again').hidden=!G.miss.length;
+  show('result');
+}
+$('#again').onclick=()=>startGame(G.items,G.key,G.mo.k,G.miss);
+$('#redo').onclick=()=>startGame(G.items,G.key,G.mo.k);
+
+/* ---------- Umriss ---------- */
+function outline(it){
+  let geo=it.f.geometry;
+  if(geo.type==='MultiPolygon'){
+    const ps=geo.coordinates.map(c=>({type:'Polygon',coordinates:c})),a=ps.map(x=>d3.geoArea(x)),m=Math.max(...a);
+    geo={type:'MultiPolygon',coordinates:ps.filter((x,i)=>a[i]>=m*.25).map(x=>x.coordinates)};
+  }
+  const pr=d3.geoMercator().fitExtent([[12,12],[388,288]],{type:'Feature',geometry:geo});
+  d3.select('#osvg').html('').append('path').attr('d',d3.geoPath(pr)(geo)).attr('class','ol');
+}
+
+/* ---------- Flagge malen ---------- */
+const COL=['#ffffff','#111111','#d62828','#8d0801','#f77f00','#fcbf49','#2d9a4a','#0b5d1e','#4cc9f0','#1d4ed8','#12206b','#7b4a2d'];
+const DR={c:'#d62828',s:8,fill:false,u:[],p:null},cv=$('#cv'),cx=cv.getContext('2d',{willReadFrequently:true});
+function pal(){$('#pal').innerHTML=COL.map(c=>'<button class="sw '+(c===DR.c?'on':'')+'" style="background:'+c+'" data-col="'+c+'"></button>').join('');$('#tfill').classList.toggle('on',DR.fill)}
+function initDraw(){cx.fillStyle='#fff';cx.fillRect(0,0,600,400);DR.u=[];$('#dres').hidden=true;$('#tdone').hidden=false;pal()}
+const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*600/r.width|0,(e.clientY-r.top)*400/r.height|0]};
+const snap=()=>{DR.u.push(cx.getImageData(0,0,600,400));if(DR.u.length>15)DR.u.shift()};
+function flood(x0,y0){
+  const w=600,h=400,im=cx.getImageData(0,0,w,h),d=im.data,i0=(y0*w+x0)*4,t=[d[i0],d[i0+1],d[i0+2]],f=[1,3,5].map(i=>parseInt(DR.c.slice(i,i+2),16)),seen=new Uint8Array(w*h),st=[[x0,y0]];
+  while(st.length){
+    const[x,y]=st.pop();if(x<0||y<0||x>=w||y>=h||seen[y*w+x])continue;seen[y*w+x]=1;
+    const i=(y*w+x)*4;if(Math.abs(d[i]-t[0])+Math.abs(d[i+1]-t[1])+Math.abs(d[i+2]-t[2])>90)continue;
+    d[i]=f[0];d[i+1]=f[1];d[i+2]=f[2];d[i+3]=255;st.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+  }
+  cx.putImageData(im,0,0);
+}
+cv.onpointerdown=e=>{
+  e.preventDefault();cv.setPointerCapture(e.pointerId);const[x,y]=pt(e);snap();
+  if(DR.fill)return flood(x,y);
+  DR.p=[x,y];cx.strokeStyle=DR.c;cx.lineCap=cx.lineJoin='round';cx.lineWidth=DR.s;cx.beginPath();cx.moveTo(x,y);cx.lineTo(x+.1,y);cx.stroke();
+};
+cv.onpointermove=e=>{
+  if(!DR.p)return;const[x,y]=pt(e);cx.lineWidth=e.pointerType==='pen'?DR.s*(.4+e.pressure):DR.s;
+  cx.beginPath();cx.moveTo(DR.p[0],DR.p[1]);cx.lineTo(x,y);cx.stroke();DR.p=[x,y];
+};
+cv.onpointerup=cv.onpointercancel=()=>{DR.p=null};
+$('#cpick').oninput=e=>{DR.c=e.target.value;pal()};
+$('#bsz').oninput=e=>{DR.s=+e.target.value;$('#bszv').textContent=DR.s};
+$('#tfill').onclick=()=>{DR.fill=!DR.fill;pal()};
+$('#tundo').onclick=()=>{const u=DR.u.pop();if(u)cx.putImageData(u,0,0)};
+$('#tclr').onclick=()=>{snap();cx.fillStyle='#fff';cx.fillRect(0,0,600,400)};
+$('#tdone').onclick=()=>{$('#dflag').innerHTML=flag(G.cur,1);$('#dres').hidden=false;$('#tdone').hidden=true};
+$('#dok').onclick=()=>{if(G){G.ok++;G.i++;next()}};
+$('#dno').onclick=()=>{if(G){G.miss.push(G.cur);G.i++;next()}};
+
+/* ---------- Statistik ---------- */
+const gname=k=>k.startsWith('q:')?((QS.find(q=>'q:'+q.id===k)||{}).name||'Gelöschtes Quiz'):MAPS[k]?MAPS[k].n:k;
+function renderStats(){
+  const keys=[...new Set(H.map(h=>h.map))];
+  if(!keys.length){$('#sgroups').innerHTML='';$('#stable').innerHTML='<p class="s">Noch keine Ergebnisse – spiele ein Quiz zu Ende.</p>';return}
+  if(!keys.includes(ST))ST=keys[0];
+  $('#sgroups').innerHTML=keys.map(k=>'<button class="chip '+(k===ST?'on':'')+'" data-sg="'+esc(k)+'">'+esc(gname(k))+'</button>').join('');
+  const p=x=>Math.round(100*x.ok/x.n);
+  const rows=MODES.map(m=>{
+    const h=H.filter(x=>x.map===ST&&x.mode===m.k);if(!h.length)return'';
+    const l=h.slice().sort((a,b)=>a.t-b.t);
+    return'<tr><td>'+m.t+'</td><td>'+h.length+'</td><td>'+p(l[l.length-1])+' %</td><td>'+Math.max(...h.map(p))+' %</td><td>'+Math.round(h.reduce((s,x)=>s+p(x),0)/h.length)+' %</td></tr>';
+  }).join('');
+  $('#stable').innerHTML='<table><tr><th>Modus</th><th>Läufe</th><th>Zuletzt</th><th>Best</th><th>Ø</th></tr>'+rows+'</table>';
+}
+$('#gostats').onclick=()=>{renderStats();show('stats')};
+document.querySelectorAll('.back').forEach(b=>b.onclick=()=>{renderHome();show('home')});
+
+/* ---------- Sync über privaten GitHub-Gist ---------- */
+const gh=(path,o)=>fetch('https://api.github.com'+path,Object.assign({headers:{Authorization:'Bearer '+SY.tok,Accept:'application/vnd.github+json','Content-Type':'application/json'}},o)).then(r=>{if(!r.ok)throw new Error('GitHub '+r.status);return r.json()});
+async function sync(){
+  if(!SY.gid){const l=await gh('/gists?per_page=100'),g=l.find(g=>g.description==='kartenquiz-sync');if(g)SY.gid=g.id}
+  let r={};
+  if(SY.gid){const g=await gh('/gists/'+SY.gid),f=g.files['kartenquiz.json'];if(f)r=JSON.parse(f.content)}
+  DEL=[...new Set([...DEL,...(r.del||[])])];
+  const u=(a,b)=>[...new Map([...b,...a].map(x=>[x.id,x])).values()];
+  const mq=new Map();
+  [...(r.quizzes||[]),...QS].forEach(q=>{const o=mq.get(q.id);if(!o||(q.m||0)>=(o.m||0))mq.set(q.id,q)});
+  QS=[...mq.values()].filter(q=>!DEL.includes(q.id));
+  H=u(H,r.hist||[]).sort((a,b)=>a.t-b.t);
+  persist();
+  const files={'kartenquiz.json':{content:JSON.stringify({quizzes:QS,hist:H,del:DEL})}};
+  if(SY.gid)await gh('/gists/'+SY.gid,{method:'PATCH',body:JSON.stringify({files})});
+  else SY.gid=(await gh('/gists',{method:'POST',body:JSON.stringify({description:'kartenquiz-sync',public:false,files})})).id;
+  store('geo.sync',SY);renderHome();
+}
+function renderSync(){$('#tok').value='';$('#syncmsg').textContent=SY.tok?'Verbunden.':'Nicht verbunden.'}
+$('#gosync').onclick=()=>{renderSync();show('sync')};
+$('#dcan').onclick=()=>{$('#dlg').hidden=true};
+$('#dyes').onclick=()=>{$('#dlg').hidden=true;if(DCB)DCB()};
+$('#tokgo').onclick=()=>{
+  const t=$('#tok').value.trim();if(!t)return;
+  SY={tok:t};store('geo.sync',SY);$('#syncmsg').textContent='Synchronisiere …';
+  sync().then(()=>$('#syncmsg').textContent='Synchronisiert.').catch(e=>$('#syncmsg').textContent='Fehler: '+e.message);
+};
+$('#tokoff').onclick=()=>{SY={};store('geo.sync',SY);renderSync()};
+
+/* ---------- Start ---------- */
+async function load(){
+  $('#loadmsg').textContent='Karten werden geladen …';$('#retry').hidden=true;show('loading');
+  try{
+    const R=await Promise.allSettled([getJSON(WORLD),getJSON(REST),getJSON(DE)]);
+    const names=['Weltkarte','Länderdaten','Deutschlandkarte'];
+    const bad=R.map((r,i)=>r.status==='rejected'?names[i]+' ('+(r.reason&&r.reason.message||r.reason)+')':'').filter(Boolean);
+    if(R[0].status==='rejected'||R[1].status==='rejected')throw new Error(bad.join(', '));
+    build(R[0].value,R[1].value,R[2].status==='fulfilled'?R[2].value:{features:[]});
+    $('#note').textContent=R[2].status==='rejected'?'Deutschlandkarte nicht geladen ('+(R[2].reason&&R[2].reason.message||'')+')':'';
+    if(SY.tok)sync().catch(()=>{});
+    renderHome();show('home');
+  }catch(e){
+    $('#loadmsg').textContent='Laden fehlgeschlagen: '+e.message;$('#retry').hidden=false;
+  }
+}
+$('#retry').onclick=load;
+load();
+</script>
+</body>
+</html>
