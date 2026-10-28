@@ -50,10 +50,15 @@ main.wide{max-width:none}#quiz>:not(svg){max-width:640px;margin-left:auto;margin
 .chip:disabled{opacity:.4;cursor:default}
 #dlg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9}
 #dlg .box{background:var(--card);border-radius:16px;padding:18px;max-width:380px;width:100%}
-svg .c.ln{fill:none;stroke:var(--ink);stroke-width:calc(var(--sw,1)*4px);stroke-linecap:round;stroke-linejoin:round;pointer-events:stroke}
+svg .c.ln{fill:none;stroke:var(--ink);stroke-width:calc(var(--lw,3.5)*1px);stroke-linecap:round;stroke-linejoin:round;pointer-events:stroke}
 svg .c.ln.ok{stroke:var(--ok)}svg .c.ln.bad{stroke:var(--bad)}svg .c.ln.warn{stroke:var(--warn)}svg .c.ln.hint{stroke:var(--hint)}
 .c.bg2{fill:var(--land);pointer-events:none}
-.hl{fill:none;stroke:var(--ink);stroke-opacity:.55;stroke-dasharray:3 2;stroke-width:calc(var(--sw,1)*.8px);pointer-events:none}
+.hl{fill:rgba(0,0,0,0);stroke:var(--ink);stroke-opacity:.55;stroke-dasharray:4 3;stroke-width:1px;vector-effect:non-scaling-stroke;pointer-events:fill}
+.c.pt{fill:var(--ink);stroke:transparent;stroke-width:16px;vector-effect:non-scaling-stroke;pointer-events:all}
+.c.pt.ok{fill:var(--ok)}.c.pt.bad{fill:var(--bad)}.c.pt.warn{fill:var(--warn)}.c.pt.hint{fill:var(--hint)}
+.c.zn{stroke:var(--f,var(--land));stroke-width:.8px}
+.zb{fill:none;stroke:var(--ink);stroke-width:calc(var(--sw,1)*1.2px);pointer-events:none}svg.nb .zb{display:none}
+tr.mh td{text-align:left;font-weight:600;padding-top:14px}
 #score{font-size:34px;font-weight:700;margin:20px 0 4px;letter-spacing:-.02em}
 </style>
 </head>
@@ -140,7 +145,7 @@ REST=['https://cdn.jsdelivr.net/npm/world-countries@5/countries.json','https://r
 DE=['https://cdn.jsdelivr.net/gh/isellsoap/deutschlandGeoJSON@main/2_bundeslaender/3_mittel.geo.json','https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/3_mittel.geo.json','https://cdn.jsdelivr.net/gh/isellsoap/deutschlandGeoJSON@main/2_bundeslaender/4_niedrig.geo.json','https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/4_niedrig.geo.json'];
 const getJSON=async us=>{const er=[];for(const u of us){try{const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}catch(e){er.push(new URL(u).hostname+': '+e.message)}}throw new Error(er.join(' | '))};
 
-const MAPS={world:{n:'Welt (UN)',b:[[-180,-58],[180,84]]},worldx:{n:'Welt ohne Inselstaaten',b:[[-180,-58],[180,84]]},eu:{n:'Europa',b:[[-25,34],[45,72]]},as:{n:'Asien',b:[[25,-11],[150,78]]},af:{n:'Afrika',b:[[-27,-36],[60,38]]},na:{n:'Nordamerika',b:[[-170,6],[-50,75]]},sa:{n:'Südamerika',b:[[-85,-57],[-33,14]]},oc:{n:'Ozeanien',b:[[110,-48],[210,15]],rot:150},de:{n:'Deutschland',b:[[5.8,47.2],[15.2,55.1]]}};
+const MAPS={world:{n:'Welt (UN)',b:[[-169,-56],[180,83.5]],ng:1},worldx:{n:'Welt ohne Inselstaaten',b:[[-169,-56],[180,83.5]],ng:1},eu:{n:'Europa',b:[[-25,34],[45,71.5]]},as:{n:'Asien',b:[[25,-11.5],[146.5,56]]},af:{n:'Afrika',b:[[-26,-35],[58.5,37.5]]},na:{n:'Nordamerika',b:[[-170,6.5],[-52,74]]},sa:{n:'Südamerika',b:[[-82,-56],[-34.5,12.6]]},oc:{n:'Ozeanien',b:[[113,-47.5],[204,15]],rot:150},de:{n:'Deutschland',b:[[5.8,47.2],[15.2,55.1]]}};
 const MODES=[
  {k:'cn',t:'Name → anklicken',d:'Der Name wird gezeigt, du tippst auf die Karte.'},
  {k:'cf',t:'Flagge → anklicken',d:'Eine Flagge wird gezeigt, du suchst das Land.',iso:1},
@@ -150,20 +155,61 @@ const MODES=[
  {k:'tf',t:'Flagge → Name tippen',d:'Eine Flagge wird gezeigt, du schreibst den Namen.',iso:1,nomap:1},
  {k:'to',t:'Umriss → Name tippen',d:'Nur die Außengrenze wird gezeigt.',nomap:1},
  {k:'df',t:'Name → Flagge malen',d:'Du malst die Flagge, danach siehst du die echte.',iso:1,nomap:1},
- {k:'ab',t:'Autobahn → anklicken',d:'A1 bis A9 auf der Karte finden (schematischer Verlauf).',fixed:'ab'}
+ {k:'cs',t:'Stadt → anklicken',d:'Eine Stadt wird genannt, du tippst auf den Punkt.',fixed:{de:'cde',worldx:'cw'}},
+ {k:'ts',t:'Markierte Stadt → Name tippen',d:'Ein Punkt leuchtet auf, du schreibst die Stadt.',fixed:{de:'cde',worldx:'cw'}},
+ {k:'ab',t:'Autobahn → anklicken',d:'A1 bis A9 auf der Karte finden (ungefährer Verlauf).',fixed:{de:'ab'}},
+ {k:'tzp',t:'Postleitzahl-Region → Ziffer',d:'Ein Gebiet leuchtet auf, du schreibst die erste Ziffer der PLZ.',fixed:{de:'zp'}},
+ {k:'tzv',t:'Vorwahl-Region → Ziffer',d:'Ein Gebiet leuchtet auf, du schreibst die erste Ziffer der Vorwahl (nach der 0).',fixed:{de:'zv'}},
+ {k:'tza',t:'Autobahn-Region → Ziffer',d:'Ein Gebiet leuchtet auf, du schreibst die erste Ziffer der Autobahnnummern.',fixed:{de:'za'}}
 ];
-const GR=['Länder','Flaggen','Hauptstädte','Umriss','Deutschland'],MG={ab:'Deutschland',cn:'Länder',tn:'Länder',cf:'Flaggen',tf:'Flaggen',df:'Flaggen',cc:'Hauptstädte',tc:'Hauptstädte',to:'Umriss'};
+const GR=['Länder','Flaggen','Hauptstädte','Städte','Umriss','Deutschland'],MG={ab:'Deutschland',tzp:'Deutschland',tzv:'Deutschland',tza:'Deutschland',cs:'Städte',ts:'Städte',cn:'Länder',tn:'Länder',cf:'Flaggen',tf:'Flaggen',df:'Flaggen',cc:'Hauptstädte',tc:'Hauptstädte',to:'Umriss'};
 MODES.forEach(m=>m.g=MG[m.k]);
-const ABW={1:[[11.22,54.5],[10.69,53.87],[9.99,53.55],[8.8,53.08],[8.05,52.28],[7.63,51.96],[7.47,51.51],[6.96,50.94],[6.79,50.66],[6.64,49.76],[7,49.24]],
-2:[[6.85,51.47],[7.82,51.68],[8.53,52.02],[9.73,52.37],[10.52,52.27],[11.63,52.13],[13.4,52.52]],
-3:[[6.25,51.83],[6.85,51.47],[6.96,50.94],[8.06,50.39],[8.68,50.11],[9.93,49.79],[11.08,49.45],[12.1,49.02],[13.46,48.57]],
-4:[[6.08,50.78],[6.96,50.94],[7.85,51.03],[9.57,50.82],[10.32,50.97],[11.03,50.98],[12.08,50.88],[12.92,50.83],[13.74,51.05],[14.99,51.15]],
-5:[[9.17,50.74],[8.67,50.58],[8.68,50.11],[8.65,49.87],[8.69,49.4],[8.4,49.01],[7.94,48.47],[7.85,48],[7.59,47.56]],
-6:[[7,49.24],[7.77,49.44],[8.47,49.49],[9.22,49.14],[11.08,49.45],[11.86,49.44],[12.49,49.65]],
-7:[[9.44,54.78],[9.99,53.55],[9.73,52.37],[9.93,51.53],[9.49,51.31],[9.68,50.55],[9.93,49.79],[9.99,48.4],[10.31,47.73],[10.7,47.57]],
-8:[[6.4,49.45],[7.37,49.25],[8.4,49.01],[9.18,48.78],[9.99,48.4],[10.9,48.37],[11.58,48.14],[12.13,47.86],[12.88,47.73]],
-9:[[13.4,52.52],[12.25,51.83],[12.37,51.34],[11.92,50.32],[11.58,49.94],[11.08,49.45],[11.42,48.76],[11.58,48.14]]};
-const ABI=Object.entries(ABW).map(([n,c])=>({id:'ab'+n,name:'A '+n,alt:[],cap:null,capalt:[],iso:null,cc:'',ln:1,f:{type:'Feature',geometry:{type:'LineString',coordinates:c}}}));
+const ABW={
+1:[[11.22,54.5],[10.88,54.29],[10.81,54.09],[10.69,53.87],[10.25,53.73],[10.1,53.55],[9.99,53.45],[9.6,53.33],[9.2,53.2],[8.85,53.05],[8.45,52.85],[8.27,52.66],[8.1,52.3],[7.86,52.18],[7.67,51.96],[7.58,51.6],[7.47,51.43],[7.3,51.3],[7.18,51.2],[7.0,51.05],[6.95,50.95],[6.8,50.65],[6.65,50.43],[6.83,50.2],[6.9,49.97],[6.7,49.76],[6.85,49.6],[7.04,49.48],[7.05,49.22]],
+2:[[6.85,51.5],[6.98,51.57],[7.2,51.61],[7.5,51.68],[7.82,51.7],[8.3,51.85],[8.55,52.0],[8.9,52.2],[9.3,52.3],[9.8,52.4],[10.2,52.3],[10.5,52.27],[11.0,52.2],[11.65,52.1],[12.0,52.3],[12.5,52.4],[13.0,52.4]],
+3:[[6.25,51.83],[6.6,51.65],[6.78,51.43],[6.9,51.3],[6.95,51.15],[7.0,51.0],[7.05,50.93],[7.2,50.8],[7.65,50.5],[8.03,50.39],[8.25,50.2],[8.35,50.08],[8.7,50.05],[8.95,50.08],[9.15,49.97],[9.6,49.85],[9.95,49.78],[10.4,49.7],[10.8,49.55],[11.05,49.4],[11.5,49.2],[12.05,49.0],[12.6,48.9],[13.05,48.75],[13.45,48.57]],
+4:[[[6.05,50.78],[6.45,50.8],[6.7,50.88],[7.0,50.93],[7.3,50.97],[7.55,51.0],[7.85,51.03]],[[9.57,50.82],[9.85,50.88],[10.32,50.97],[10.7,50.95],[11.03,50.98],[11.3,50.98],[11.6,50.93],[12.08,50.88],[12.5,50.85],[12.92,50.83],[13.35,50.95],[13.74,51.05],[14.2,51.15],[14.6,51.15],[14.99,51.15]]],
+5:[[9.27,50.75],[8.95,50.65],[8.7,50.55],[8.7,50.35],[8.65,50.15],[8.62,50.0],[8.65,49.85],[8.62,49.65],[8.65,49.45],[8.65,49.3],[8.45,49.05],[8.2,48.75],[7.95,48.47],[7.85,48.25],[7.85,48.0],[7.6,47.78],[7.58,47.6]],
+6:[[7.0,49.2],[7.18,49.35],[7.5,49.42],[7.75,49.44],[8.2,49.5],[8.47,49.5],[8.65,49.3],[8.9,49.25],[9.2,49.15],[9.7,49.1],[10.1,49.15],[10.55,49.3],[11.05,49.4],[11.5,49.45],[11.85,49.45],[12.15,49.65],[12.5,49.65]],
+7:[[9.4,54.8],[9.5,54.5],[9.65,54.3],[9.98,54.07],[9.9,53.65],[9.95,53.5],[9.95,53.4],[9.8,52.95],[9.65,52.75],[9.75,52.4],[9.9,52.15],[9.95,51.8],[9.95,51.55],[9.5,51.3],[9.6,50.9],[9.7,50.55],[9.9,50.2],[10.15,49.95],[9.95,49.78],[10.1,49.45],[10.15,49.15],[10.1,48.8],[9.95,48.4],[10.2,48.0],[10.3,47.72],[10.65,47.58]],
+8:[[6.4,49.47],[6.75,49.35],[7.18,49.35],[7.37,49.25],[7.8,49.2],[8.35,49.0],[8.7,48.9],[9.15,48.75],[9.65,48.7],[9.95,48.4],[10.28,48.45],[10.9,48.37],[11.4,48.2],[11.7,48.1],[12.1,47.85],[12.65,47.82],[12.95,47.78]],
+9:[[13.1,52.35],[12.85,52.1],[12.65,51.85],[12.25,51.8],[12.1,51.55],[12.3,51.3],[11.95,51.0],[11.9,50.7],[11.9,50.3],[11.6,49.95],[11.55,49.75],[11.1,49.45],[11.4,48.9],[11.55,48.6],[11.6,48.2]]};
+const ABI=Object.entries(ABW).map(([n,c])=>({id:'ab'+n,name:'A '+n,alt:[],cap:null,capalt:[],iso:null,cc:'',ln:1,f:{type:'Feature',geometry:{type:Array.isArray(c[0][0])?'MultiLineString':'LineString',coordinates:c}}}));
+const sp=t=>t.split(';').map(x=>x.split(',').map(Number));
+const ZRAW={
+zp:{0:'13.74,51.05;12.37,51.34;12.92,50.83;14.33,51.76;11.97,51.48;12.08,50.88;14.99,51.15;12.14,50.5;12.24,51.83;14.42,51.18',
+1:'13.4,52.52;13.07,52.4;14.55,52.35;12.8,52.93;14.28,53.06;13.26,53.56;13.38,54.09;12.14,54.09;11.41,53.63;13.08,54.31;12.56,52.41;13.86,53.32;11.86,53.07',
+2:'9.99,53.55;10.14,54.32;10.69,53.87;9.44,54.78;8.8,53.08;8.21,53.14;10.41,53.25;8.7,53.87;7.2,53.37;8.1,53.53;9.05,54.48;11.46,53.9;11.15,52.85',
+3:'9.73,52.37;10.53,52.27;9.93,51.53;9.5,51.31;9.95,52.15;11.63,52.12;10.78,52.42;8.75,51.72;8.53,52.02;9.68,50.55;8.77,50.8;8.67,50.58;11.05,51.9;11.86,52.6;10.08,52.62;8.92,52.29',
+4:'7.47,51.51;7.01,51.46;6.76,51.43;6.77,51.23;7.63,51.96;6.59,51.34;7.15,51.26;8.05,52.28;6.44,51.2;6.62,51.84;7.32,52.52;6.62,51.65',
+5:'6.96,50.94;7.1,50.73;6.08,50.78;7.6,50.36;6.64,49.76;8.02,50.87;7.47,51.36;7.82,51.68;8.27,50.0;6.98,51.03;8.11,51.57',
+6:'8.68,50.11;8.24,50.08;8.65,49.87;8.47,49.49;8.69,49.4;7.0,49.23;7.77,49.44;8.92,50.13;8.36,49.63;8.06,50.39;9.15,49.97;7.6,49.2;7.87,49.85',
+7:'9.18,48.78;8.4,49.01;7.85,48.0;9.22,49.14;9.06,48.52;7.94,48.47;8.7,48.89;8.46,48.06;7.66,47.62;9.17,47.66;8.12,49.2',
+8:'11.58,48.14;10.9,48.37;12.12,47.86;9.99,48.4;10.31,47.73;11.42,48.76;11.1,47.5;10.18,47.98;12.15,48.54;9.61,47.78;9.79,48.1;10.15,48.68',
+9:'11.08,49.45;9.93,49.79;12.1,49.02;11.58,49.94;10.89,49.89;13.46,48.57;11.03,50.98;11.92,50.32;10.23,50.05;10.57,49.3;12.16,49.68;11.86,49.44;12.57,48.88;10.32,50.97;10.69,50.61;10.46,51.21'},
+zv:{2:'6.96,50.94;6.77,51.23;7.01,51.46;7.47,51.51;6.08,50.78;7.63,51.96;8.02,50.87;7.6,50.36;7.1,50.73;6.59,51.34;7.15,51.26;7.47,51.36;7.82,51.68;6.62,51.84;6.76,51.43;6.44,51.2;7.0,51.03',
+3:'13.4,52.52;13.07,52.4;14.33,51.76;11.63,52.12;11.97,51.48;12.37,51.34;13.74,51.05;12.92,50.83;11.03,50.98;11.59,50.93;12.14,54.09;11.41,53.63;13.26,53.56;13.08,54.31;14.55,52.35;12.08,50.88;14.99,51.15;10.32,50.97;11.86,52.6;12.24,51.83;11.46,53.9;10.69,50.61;10.79,51.5',
+4:'9.99,53.55;10.14,54.32;10.69,53.87;8.8,53.08;9.44,54.78;10.41,53.25;8.21,53.14;8.7,53.87;7.2,53.37;8.1,53.53;9.05,54.48;9.48,53.6;9.23,52.92',
+5:'9.73,52.37;10.53,52.27;9.93,51.53;8.05,52.28;8.53,52.02;9.5,51.31;8.75,51.72;10.78,52.42;10.08,52.62;9.95,52.15;7.29,52.7;7.07,52.43;8.92,52.29;9.84,52.99;10.43,51.9;9.36,52.1;7.32,52.52;7.44,52.28;9.38,51.77',
+6:'8.68,50.11;8.27,50.0;8.24,50.08;8.65,49.87;8.47,49.49;8.69,49.4;7.0,49.23;7.77,49.44;6.64,49.76;8.67,50.58;9.68,50.55;8.77,50.8;9.15,49.97;8.06,50.39;8.36,49.63;7.87,49.85;7.6,49.2;8.92,50.13;9.7,50.87',
+7:'9.18,48.78;8.4,49.01;7.85,48.0;9.22,49.14;9.06,48.52;7.94,48.47;8.7,48.89;8.46,48.06;7.66,47.62;9.17,47.66;9.99,48.4;10.15,48.68;9.61,47.78;9.79,48.1;9.48,47.65;9.7,49.1',
+8:'11.58,48.14;10.9,48.37;12.12,47.86;11.42,48.76;10.31,47.73;12.15,48.54;13.46,48.57;11.1,47.5;10.18,47.98;12.83,48.17;11.75,48.4;10.28,48.45',
+9:'11.08,49.45;9.93,49.79;12.1,49.02;11.58,49.94;10.89,49.89;11.92,50.32;10.23,50.05;10.57,49.3;12.16,49.68;11.86,49.44;12.57,48.88;12.96,48.84;10.96,50.26;11.5,49.2'},
+za:{1:'13.4,52.52;13.07,52.4;14.33,51.76;14.55,52.35;13.74,51.05;12.14,54.09;13.26,53.56;11.63,52.12;12.37,51.34;11.97,51.48;11.41,53.63;12.24,51.83;12.56,52.41',
+2:'9.99,53.55;10.14,54.32;10.69,53.87;9.44,54.78;8.8,53.08;8.21,53.14;10.41,53.25;8.7,53.87;7.2,53.37;11.46,53.9;13.38,54.09;13.08,54.31;9.05,54.48;8.1,53.53',
+3:'9.73,52.37;10.53,52.27;9.93,51.53;8.05,52.28;8.53,52.02;8.75,51.72;10.78,52.42;10.08,52.62;9.95,52.15;11.05,51.9;10.79,51.5;7.32,52.52;7.63,51.96;8.92,52.29;11.86,52.6',
+4:'7.47,51.51;7.01,51.46;6.76,51.43;6.77,51.23;6.08,50.78;7.15,51.26;9.5,51.31;8.02,50.87;7.47,51.36;6.44,51.2;6.62,51.84;8.67,50.58;8.77,50.8;9.68,50.55',
+5:'6.96,50.94;7.1,50.73;6.59,51.34;6.69,51.2;6.98,51.03;6.5,50.8;7.2,50.9',
+6:'8.68,50.11;8.27,50.0;8.24,50.08;8.65,49.87;8.47,49.49;8.69,49.4;7.0,49.23;7.77,49.44;6.64,49.76;7.6,50.36;9.15,49.97;8.36,49.63;7.87,49.85;8.92,50.13;8.06,50.39',
+7:'11.03,50.98;10.69,50.61;10.23,50.05;11.58,49.94;11.92,50.32;12.92,50.83;12.14,50.5;10.89,49.89;10.96,50.26;10.32,50.97;12.08,50.88;11.59,50.93',
+8:'9.18,48.78;8.4,49.01;7.85,48.0;9.22,49.14;9.06,48.52;7.94,48.47;8.7,48.89;8.46,48.06;7.66,47.62;9.17,47.66;9.99,48.4;9.93,49.79;10.15,48.68;9.61,47.78;9.79,48.1;9.7,49.1',
+9:'11.58,48.14;10.9,48.37;12.12,47.86;11.42,48.76;10.31,47.73;12.15,48.54;13.46,48.57;11.1,47.5;10.18,47.98;11.08,49.45;12.1,49.02;12.16,49.68;11.86,49.44;12.57,48.88;10.57,49.3;11.5,49.2'}};
+const ZS={};Object.entries(ZRAW).forEach(([k,o])=>{ZS[k]={};Object.entries(o).forEach(([d,t])=>ZS[k][d]=sp(t))});
+const CITY=(t,alt)=>t.split(';').map((x,i)=>{const[n,a,b]=x.split(',');return{id:'c'+n,name:n,alt:alt[n]?[alt[n]]:[],cap:null,capalt:[],iso:null,cc:'',pt:[+a,+b]}});
+const CDE='Berlin,13.405,52.52;Hamburg,9.993,53.551;München,11.582,48.135;Köln,6.96,50.938;Frankfurt am Main,8.682,50.11;Stuttgart,9.18,48.775;Düsseldorf,6.773,51.228;Leipzig,12.373,51.34;Dortmund,7.466,51.514;Essen,7.013,51.456;Bremen,8.802,53.079;Dresden,13.738,51.05;Hannover,9.732,52.375;Nürnberg,11.077,49.452;Duisburg,6.763,51.435;Bochum,7.216,51.482;Wuppertal,7.15,51.256;Bielefeld,8.532,52.021;Bonn,7.1,50.734;Münster,7.626,51.961;Karlsruhe,8.404,49.007;Mannheim,8.466,49.489;Augsburg,10.898,48.37;Wiesbaden,8.24,50.082;Mönchengladbach,6.442,51.195;Gelsenkirchen,7.1,51.517;Aachen,6.083,50.776;Braunschweig,10.527,52.269;Kiel,10.135,54.323;Chemnitz,12.92,50.833';
+const CWT='New York,-74.0,40.71;Los Angeles,-118.24,34.05;Chicago,-87.63,41.88;Toronto,-79.38,43.65;Mexiko-Stadt,-99.13,19.43;Bogotá,-74.07,4.71;Lima,-77.04,-12.05;Santiago de Chile,-70.65,-33.45;Buenos Aires,-58.38,-34.6;São Paulo,-46.63,-23.55;Rio de Janeiro,-43.17,-22.91;London,-0.13,51.51;Paris,2.35,48.86;Madrid,-3.7,40.42;Rom,12.5,41.9;Istanbul,28.98,41.01;Moskau,37.62,55.75;Kairo,31.24,30.04;Lagos,3.38,6.52;Nairobi,36.82,-1.29;Kinshasa,15.27,-4.32;Johannesburg,28.05,-26.2;Kapstadt,18.42,-33.92;Dubai,55.27,25.2;Teheran,51.39,35.69;Mumbai,72.88,19.08;Delhi,77.2,28.61;Karatschi,67.0,24.86;Dhaka,90.41,23.81;Bangkok,100.5,13.75;Jakarta,106.85,-6.21;Hongkong,114.17,22.32;Schanghai,121.47,31.23;Peking,116.4,39.9;Seoul,126.98,37.57;Tokio,139.69,35.69;Sydney,151.21,-33.87;Berlin,13.4,52.52';
+const CALT={'Frankfurt am Main':'Frankfurt',Rom:'Rome',Moskau:'Moscow',Kairo:'Cairo',Peking:'Beijing',Tokio:'Tokyo',Schanghai:'Shanghai',Hongkong:'Hong Kong','Mexiko-Stadt':'Mexico City',Kapstadt:'Cape Town',Teheran:'Tehran',Karatschi:'Karachi','Santiago de Chile':'Santiago'};
+const DEFL={bw:'Flag of Baden-Württemberg.svg',by:'Flag of Bavaria (lozengy).svg',be:'Flag of Berlin.svg',bb:'Flag of Brandenburg.svg',hb:'Flag of Bremen.svg',hh:'Flag of Hamburg.svg',he:'Flag of Hesse.svg',mv:'Flag of Mecklenburg-Western Pomerania.svg',ni:'Flag of Lower Saxony.svg',nw:'Flag of North Rhine-Westphalia.svg',rp:'Flag of Rhineland-Palatinate.svg',sl:'Flag of Saarland.svg',sn:'Flag of Saxony.svg',st:'Flag of Saxony-Anhalt.svg',sh:'Flag of Schleswig-Holstein.svg',th:'Flag of Thuringia.svg'};
 const HL=new Set('bs mv sc cv km mh fm pw tv vu sb st ag kn vc tt bh mu'.split(' '));
 const DECAP={Warsaw:'Warschau',Moscow:'Moskau',Prague:'Prag',Vienna:'Wien',Rome:'Rom',Brussels:'Brüssel',Copenhagen:'Kopenhagen',Athens:'Athen',Lisbon:'Lissabon',Bucharest:'Bukarest',Cairo:'Kairo',Beijing:'Peking',Belgrade:'Belgrad',Kyiv:'Kiew',Havana:'Havanna','Mexico City':'Mexiko-Stadt',Nicosia:'Nikosia',Luxembourg:'Luxemburg',Baghdad:'Bagdad',Damascus:'Damaskus',Tehran:'Teheran',Yerevan:'Eriwan',Tashkent:'Taschkent',Pyongyang:'Pjöngjang','New Delhi':'Neu-Delhi','Addis Ababa':'Addis Abeba',Algiers:'Algier',Khartoum:'Khartum',Mogadishu:'Mogadischu','Cape Town':'Kapstadt',Muscat:'Maskat'};
 const DELAND={'Baden-Württemberg':'Stuttgart','Bayern':'München','Berlin':'Berlin','Brandenburg':'Potsdam','Bremen':'Bremen','Hamburg':'Hamburg','Hessen':'Wiesbaden','Mecklenburg-Vorpommern':'Schwerin','Niedersachsen':'Hannover','Nordrhein-Westfalen':'Düsseldorf','Rheinland-Pfalz':'Mainz','Saarland':'Saarbrücken','Sachsen':'Dresden','Sachsen-Anhalt':'Magdeburg','Schleswig-Holstein':'Kiel','Thüringen':'Erfurt'};
@@ -191,6 +237,7 @@ const byMap={},HIDE=new Set();
 const ISL=new Set('pw fm mh nr ki tv to ws gd vc lc dm bb ag kn'.split(' ')),EXTRA=new Set('xk eh ps tw pr va'.split(' '));
 const DEID={BW:'Baden-Württemberg',BY:'Bayern',BE:'Berlin',BB:'Brandenburg',HB:'Bremen',HH:'Hamburg',HE:'Hessen',MV:'Mecklenburg-Vorpommern',NI:'Niedersachsen',NW:'Nordrhein-Westfalen',RP:'Rheinland-Pfalz',SL:'Saarland',SN:'Sachsen',ST:'Sachsen-Anhalt',SH:'Schleswig-Holstein',TH:'Thüringen'};
 const DEEN={Bavaria:'Bayern','Lower Saxony':'Niedersachsen',Hesse:'Hessen',Saxony:'Sachsen','Saxony-Anhalt':'Sachsen-Anhalt',Thuringia:'Thüringen','North Rhine-Westphalia':'Nordrhein-Westfalen','Rhineland-Palatinate':'Rheinland-Pfalz','Mecklenburg-Western Pomerania':'Mecklenburg-Vorpommern'};
+const DECODE=Object.fromEntries(Object.entries(DEID).map(([k,v])=>[v,k]));
 const fixW=f=>{
   if(!f.geometry||d3.geoArea(f)<=2*Math.PI)return f;
   const rv=g=>g.type==='Polygon'?{type:'Polygon',coordinates:g.coordinates.map(x=>x.slice().reverse())}:{type:'MultiPolygon',coordinates:g.coordinates.map(p=>p.map(x=>x.slice().reverse()))};
@@ -216,7 +263,7 @@ function build(topo,countries,de){
     const mg=topojson.merge(topo,[cy,nc]);
     feats=feats.filter(f=>f.properties.name!=='N. Cyprus').map(f=>String(f.id)==='196'?{type:'Feature',id:f.id,properties:f.properties,geometry:mg}:f);
   }
-  byMap.bgf=feats;
+  byMap.bgf=feats.filter(f=>{const c=cm[String(f.id).padStart(3,'0')];if(!c)return['Somaliland','Kosovo'].includes(f.properties.name);return c.unMember||EXTRA.has(c.cca2.toLowerCase())||c.area>=30000});
   const all=[];
   feats.forEach(f=>{
     const c=cm[String(f.id).padStart(3,'0')];
@@ -232,63 +279,98 @@ function build(topo,countries,de){
   });
   all.filter(i=>ISL.has(i.cc)).forEach(i=>HIDE.add(i.f));
   byMap.ab=ABI;
+  byMap.cde=CITY(CDE,CALT);byMap.cw=CITY(CWT,CALT);
+  Object.keys(ZS).forEach(k=>byMap[k]=Object.keys(ZS[k]).map(d=>({id:k+d,name:d,alt:[],cap:null,capalt:[],iso:null,cc:''})));
   byMap.world=all.filter(i=>i.un);
   byMap.worldx=all.filter(i=>(i.un&&!ISL.has(i.cc))||EXTRA.has(i.cc));
   ['eu','as','af','na','sa','oc'].forEach(k=>byMap[k]=all.filter(i=>(i.un||EXTRA.has(i.cc))&&i.cont===k));
   byMap.de=de.features.map(fixW).map(f=>{
     const p=f.properties||{},k=String(p.id||p.iso_3166_2||p['ISO3166-2']||'').toUpperCase().replace(/^DE-/,'');
     const n=DEID[k]||DEEN[p.name]||p.name||p.NAME_1;
-    return{id:'d:'+n,name:n,alt:[],cap:DELAND[n],capalt:[],iso:null,cc:'',f};
+    return{id:'d:'+n,name:n,alt:[],cap:DELAND[n],capalt:[],iso:DECODE[n]?'de-'+DECODE[n].toLowerCase():null,cc:'',f};
   }).filter(i=>i.name);
 }
 
 /* ---------- Karte ---------- */
 const pts=([[w,s],[e,n]])=>{const o=[];for(let t=0;t<=6;t++){const x=w+(e-w)*t/6,y=s+(n-s)*t/6;o.push([x,s],[x,n],[w,y],[e,y])}return o};
-const grow=([[w,s],[e,n]],L)=>{const dx=(e-w)*.08,dy=(n-s)*.08;return[[Math.max(-180,w-dx),Math.max(-80,s-dy)],[Math.min(L,e+dx),Math.min(85,n+dy)]]};
+const grow=([[w,s],[e,n]],L)=>{const dx=(e-w)*.03,dy=(n-s)*.03;return[[Math.max(-180,w-dx),Math.max(-80,s-dy)],[Math.min(L,e+dx),Math.min(85,n+dy)]]};
 function fitBox(it){
   let[[w,s],[e,n]]=d3.geoBounds({type:'FeatureCollection',features:it.map(i=>i.f)});
   if(w>e){w=-180;e=180}
   const px=Math.max(0,(14-(e-w))/2),py=Math.max(0,(9-(n-s))/2),m=Math.max(2,(e-w)*.06);
   return[[Math.max(-180,w-m-px),Math.max(-80,s-m-py)],[Math.min(180,e+m+px),Math.min(84,n+m+py)]];
 }
+const BASE={ab:'de',cde:'de',cw:'worldx',zp:'de',zv:'de',za:'de'};
 function mkMap(svg,key,fs,fit){
-  const items=byMap[key],mw=Math.round($('main').clientWidth),[W,H]=fs?[mw,Math.round(Math.min(Math.max(260,innerHeight-fs),mw*1.6))]:key==='de'?[560,720]:[800,520],m=MAPS[key]||{b:[[5.8,47.2],[15.2,55.1]]};
-  const pr=key==='de'||key==='ab'?d3.geoMercator():d3.geoNaturalEarth1();
+  const items=byMap[key],bk=BASE[key]||key,mw=Math.round($('main').clientWidth);
+  let[W,H]=fs?[mw,Math.round(Math.min(Math.max(260,innerHeight-fs),mw*1.6))]:bk==='de'?[560,720]:[800,520];
+  const m=MAPS[bk]||{},pr=bk==='de'?d3.geoMercator():d3.geoNaturalEarth1();
   if(m.rot)pr.rotate([-m.rot,0]);
-  if(fit)pr.fitSize([W,H],{type:'MultiPoint',coordinates:pts(fitBox(fit))});
-  else if(m.b)pr.fitSize([W,H],{type:'MultiPoint',coordinates:pts(grow(m.b,m.rot?400:180))});
-  else if(key==='de')pr.fitSize([W,H],{type:'FeatureCollection',features:items.map(i=>i.f)});
-  else pr.fitSize([W,H],{type:'Sphere'});
+  const BP=fit?pts(fitBox(fit)):m.b?pts(m.ng?m.b:grow(m.b,m.rot?400:180)):null;
+  if(BP){
+    const mp={type:'MultiPoint',coordinates:BP};
+    pr.fitSize([W,H],mp);
+    const bb=d3.geoPath(pr).bounds(mp);
+    H=Math.round(Math.min(H,bb[1][1]-bb[0][1]+12));
+    pr.fitSize([W,H],mp);
+  }else pr.fitSize([W,H],{type:'Sphere'});
   const path=d3.geoPath(pr),root=d3.select(svg);
   root.selectAll('*').remove();
   root.attr('viewBox','0 0 '+W+' '+H).style('width',fs?'calc(100% + 32px)':'min(100%,'+(52*W/H).toFixed(1)+'vh)').style('margin',fs?'0 -16px':null);
-  const g=root.append('g');
+  const defs=root.append('defs'),g=root.append('g');
   const own=new Set(items.map(i=>i.f));
-  g.append('g').selectAll('path').data(byMap.bgf.filter(f=>!own.has(f)&&!(key==='worldx'&&HIDE.has(f)))).join('path').attr('d',path).attr('class','c bg');
-  if(key==='ab'){
-    const g0=byMap.de.length?byMap.de:[{f:byMap.bgf.find(f=>String(f.id)==='276')}];
-    g.append('g').selectAll('path').data(g0).join('path').attr('d',d=>path(d.f)).attr('class','c bg2');
+  g.append('g').selectAll('path').data(byMap.bgf.filter(f=>!own.has(f)&&!(bk==='worldx'&&HIDE.has(f)))).join('path').attr('d',path).attr('class','c bg');
+  const gf=byMap.bgf.find(f=>String(f.id)==='276');
+  if(key==='ab'||key==='cde')g.append('g').selectAll('path').data(byMap.de.length?byMap.de:[{f:gf}]).join('path').attr('d',d=>path(d.f)).attr('class','c bg2');
+  if(key==='cw')g.append('g').selectAll('path').data(byMap.worldx).join('path').attr('d',d=>path(d.f)).attr('class','c bg2');
+  let bd='';
+  if(ZS[key]){
+    defs.append('clipPath').attr('id','dec').append('path').attr('d',path(gf));
+    const gb=path.bounds(gf),P=[],L=[],ed=new Map(),cells={},ext={},fx=p=>p[0].toFixed(1)+','+p[1].toFixed(1);
+    Object.keys(ZS[key]).forEach(dg=>{cells[dg]=[];ext[dg]=[1e9,1e9,-1e9,-1e9];ZS[key][dg].forEach(sd=>{P.push(pr(sd));L.push(dg)})});
+    const vo=d3.Delaunay.from(P).voronoi([-W,-H,2*W,2*H]);
+    P.forEach((q,i)=>{
+      const c=vo.cellPolygon(i);if(!c)return;
+      cells[L[i]].push(c);const e=ext[L[i]];
+      c.forEach(z=>{e[0]=Math.min(e[0],z[0]);e[1]=Math.min(e[1],z[1]);e[2]=Math.max(e[2],z[0]);e[3]=Math.max(e[3],z[1])});
+      for(let j=0;j<c.length-1;j++){const k2=[fx(c[j]),fx(c[j+1])].sort().join('|');if(!ed.has(k2))ed.set(k2,[]);ed.get(k2).push([L[i],c[j],c[j+1]])}
+    });
+    items.forEach(it=>{
+      it.d=cells[it.name].map(c=>'M'+c.map(fx).join('L')+'Z').join('');
+      const e=ext[it.name];it.bb=[[Math.max(gb[0][0],e[0]),Math.max(gb[0][1],e[1])],[Math.min(gb[1][0],e[2]),Math.min(gb[1][1],e[3])]];
+    });
+    bd=[...ed.values()].filter(v=>v.length===2&&v[0][0]!==v[1][0]).map(v=>'M'+fx(v[0][1])+'L'+fx(v[0][2])).join('');
   }
-  const hl=items.filter(i=>HL.has(i.cc)&&i.f.geometry.type==='MultiPolygon'&&i.f.geometry.coordinates.length>1).map(i=>{
+  const hl=items.filter(i=>i.f&&HL.has(i.cc)&&i.f.geometry.type==='MultiPolygon'&&i.f.geometry.coordinates.length>1).map(i=>{
     const q=[];i.f.geometry.coordinates.forEach(pl=>pl[0].forEach(c=>{const z=pr(c);if(z)q.push(z)}));
     const h=d3.polygonHull(q);if(!h)return null;
     const cx=d3.mean(h,z=>z[0]),cy=d3.mean(h,z=>z[1]);
     const hp=h.map(z=>{const dx=z[0]-cx,dy=z[1]-cy,l=Math.hypot(dx,dy)||1;return[z[0]+dx/l*4,z[1]+dy/l*4]});
     const xs=hp.map(z=>z[0]),ys=hp.map(z=>z[1]);
-    return{d:'M'+hp.map(z=>z[0].toFixed(1)+','+z[1].toFixed(1)).join('L')+'Z',sz:Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))};
+    return{it:i,d:'M'+hp.map(z=>z[0].toFixed(1)+','+z[1].toFixed(1)).join('L')+'Z',sz:Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))};
   }).filter(h=>h&&h.sz<80);
   const hsel=g.append('g').selectAll('path').data(hl).join('path').attr('d',d=>d.d).attr('class','hl');
-  const lay=g.append('g');
-  lay.selectAll('path').data(items).join('path').attr('d',d=>path(d.f)).attr('class',d=>'c'+(d.ln?' ln':''));
-  const szm=new Map(),sm=items.filter(i=>{if(i.ln)return false;const[[x0,y0],[x1,y1]]=path.bounds(i.f),z=Math.max(x1-x0,y1-y0);szm.set(i,z);return z<12});
-  const circ=lay.selectAll('circle').data(sm).join('circle').attr('cx',d=>path.centroid(d.f)[0]).attr('cy',d=>path.centroid(d.f)[1]).attr('r',3).attr('class','c');
+  const lay=g.append('g'),pI=items.filter(i=>!i.pt);
+  lay.selectAll('path').data(pI).join('path').attr('d',d=>d.d||path(d.f)).attr('class',d=>'c'+(d.ln?' ln':'')+(d.d?' zn':'')).attr('clip-path',d=>d.d?'url(#dec)':null);
+  const szm=new Map(),sm=pI.filter(i=>{if(i.ln||i.d)return false;const[[x0,y0],[x1,y1]]=path.bounds(i.f),z=Math.max(x1-x0,y1-y0);szm.set(i,z);return z<22});
+  const circ=lay.selectAll('circle.sm').data(sm).join('circle').attr('cx',d=>path.centroid(d.f)[0]).attr('cy',d=>path.centroid(d.f)[1]).attr('r',3).attr('class','c sm');
+  const ptc=lay.selectAll('circle.pt').data(items.filter(i=>i.pt)).join('circle').attr('cx',d=>pr(d.pt)[0]).attr('cy',d=>pr(d.pt)[1]).attr('r',5).attr('class','c pt');
   const sel=lay.selectAll('.c');
-  const zoom=d3.zoom().scaleExtent([1,40]).extent([[0,0],[W,H]]).translateExtent([[0,0],[W,H]]).on('zoom',e=>{g.attr('transform',e.transform);g.style('--sw',1/e.transform.k);const k=e.transform.k;circ.attr('r',(3+3*Math.min(1,(k-1)/3))/k).attr('display',d=>szm.get(d)*k<12?null:'none');hsel.attr('display',d=>d.sz*k<45?null:'none')});
+  if(bd)g.append('g').attr('clip-path','url(#dec)').append('path').attr('d',bd).attr('class','zb');
+  const zoom=d3.zoom().scaleExtent([1,40]).extent([[0,0],[W,H]]).translateExtent([[0,0],[W,H]]).on('zoom',e=>{
+    const k=e.transform.k;g.attr('transform',e.transform);g.style('--sw',1/k).style('--lw',3.5/Math.sqrt(k));
+    circ.attr('r',(3+3*Math.min(1,(k-1)/3))/k).attr('display',d=>k>=1.8&&szm.get(d)*k<40?null:'none');
+    ptc.attr('r',5/k);
+  });
   root.call(zoom).call(zoom.transform,d3.zoomIdentity);
-  return{sel,
+  return{sel,hsel,
     reset(){root.transition().duration(300).call(zoom.transform,d3.zoomIdentity)},
-    zoomTo(d){const[[x0,y0],[x1,y1]]=path.bounds(d.f),k=Math.max(1,Math.min(5,.2/Math.max((x1-x0)/W,(y1-y0)/H)));
-      root.transition().duration(400).call(zoom.transform,d3.zoomIdentity.translate(W/2-k*(x0+x1)/2,H/2-k*(y0+y1)/2).scale(k))}};
+    zoomTo(d){
+      let cx,cy,k;
+      if(d.pt){[cx,cy]=pr(d.pt);k=3}
+      else{const[[x0,y0],[x1,y1]]=d.bb||path.bounds(d.f);cx=(x0+x1)/2;cy=(y0+y1)/2;k=Math.max(1,Math.min(5,.2/Math.max((x1-x0)/W,(y1-y0)/H)))}
+      root.transition().duration(400).call(zoom.transform,d3.zoomIdentity.translate(W/2-k*cx,H/2-k*cy).scale(k));
+    }};
 }
 
 /* ---------- Startseite ---------- */
@@ -302,7 +384,7 @@ function curItems(){
   return{items:byMap[S.map],key:S.map};
 }
 const chip=(k,n,c,x)=>'<button class="chip '+(S.map===k?'on':'')+'" data-map="'+k+'">'+esc(n)+(c?'<small>'+c+'</small>':'')+(x?'<span class="x" data-edit="'+k.slice(2)+'">✎</span>':'')+'</button>';
-const okm=m=>m.fixed?S.map==='de':curItems().items.some(i=>(!m.iso||i.iso)&&(!m.cap||i.cap));
+const okm=m=>m.fixed?!!m.fixed[S.map]:curItems().items.some(i=>(!m.iso||i.iso)&&(!m.cap||i.cap));
 function renderHome(){
   const{items}=curItems();
   const ok=okm;
@@ -325,7 +407,7 @@ document.addEventListener('click',e=>{
   else if(b=t.closest('[data-col]')){DR.c=b.dataset.col;pal()}
   else if(b=t.closest('[data-emap]')){E.map=b.dataset.emap;E.sel=new Set();renderEdit()}
 });
-$('#start').onclick=()=>{const mo=MODES.find(m=>m.k===S.mode);if(mo.fixed)return startGame(byMap[mo.fixed],mo.fixed,S.mode);const c=curItems();startGame(c.items,c.key,S.mode)};
+$('#start').onclick=()=>{const mo=MODES.find(m=>m.k===S.mode);if(mo.fixed){const fk=mo.fixed[S.map];return startGame(byMap[fk],fk,S.mode)}const c=curItems();startGame(c.items,c.key,S.mode)};
 $('#newq').onclick=()=>openEdit();
 $('#tohome').onclick=$('#quit').onclick=()=>{G=null;renderHome();show('home')};
 
@@ -336,10 +418,11 @@ function openEdit(q){
   $('#qname').value=q?q.name:'';$('#etitle').textContent=q?'Quiz bearbeiten':'Neues Quiz';$('#edel').hidden=!q;
   renderEdit();show('edit');
 }
+const tog=d=>{E.sel.has(d.id)?E.sel.delete(d.id):E.sel.add(d.id);paint()};
 function renderEdit(){
   $('#emaps').innerHTML=Object.entries(MAPS).map(([k,m])=>'<button type="button" class="chip '+(E.map===k?'on':'')+'" data-emap="'+k+'">'+m.n+'</button>').join('');
   E.m=mkMap($('#esvg'),E.map);
-  E.m.sel.on('click',(e,d)=>{E.sel.has(d.id)?E.sel.delete(d.id):E.sel.add(d.id);paint()});
+  E.m.sel.on('click',(e,d)=>tog(d));E.m.hsel.on('click',(e,d)=>tog(d.it));
   paint();
 }
 function paint(){E.m.sel.classed('sel',d=>E.sel.has(d.id));$('#ecount').textContent=E.sel.size+' von '+byMap[E.map].length;$('#enames').textContent=byMap[E.map].filter(i=>E.sel.has(i.id)).map(i=>i.name).sort((a,b)=>a.localeCompare(b,'de')).join(', ')}
@@ -363,13 +446,13 @@ $('#edel').onclick=()=>{
 
 /* ---------- Spiel ---------- */
 let G=null;
-const FS=iso=>['https://cdn.jsdelivr.net/npm/flag-icons@7/flags/4x3/'+iso+'.svg','https://flagcdn.com/w320/'+iso+'.png'];
+const FS=iso=>iso.startsWith('de-')?['https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(DEFL[iso.slice(3)]||'x')+'?width=320']:['https://cdn.jsdelivr.net/npm/flag-icons@7/flags/4x3/'+iso+'.svg','https://flagcdn.com/w320/'+iso+'.png'];
 const emo=iso=>String.fromCodePoint(...[...iso.toUpperCase()].map(c=>127397+c.charCodeAt(0)));
 const flag=(it,big)=>'<img'+(big?' class="big"':'')+' alt="" src="'+FS(it.iso)[0]+'" data-iso="'+it.iso+'" data-n="1" onerror="flagErr(this)">';
 function flagErr(im){
   const n=+im.dataset.n,l=FS(im.dataset.iso);
   if(n<l.length){im.dataset.n=n+1;im.src=l[n];return}
-  const sp=document.createElement('span');sp.textContent=emo(im.dataset.iso);sp.style.cssText='line-height:1;font-size:'+(im.classList.contains('big')?96:44)+'px';im.replaceWith(sp);
+  const sp=document.createElement('span');sp.textContent=im.dataset.iso.includes('-')?'🏳️':emo(im.dataset.iso);sp.style.cssText='line-height:1;font-size:'+(im.classList.contains('big')?96:44)+'px';im.replaceWith(sp);
 }
 function startGame(items,key,mode,only){
   const mo=MODES.find(m=>m.k===mode);
@@ -381,8 +464,8 @@ function startGame(items,key,mode,only){
   $('#tf').hidden=!mo.k.startsWith('t');
   vis($('#osvg'),mo.k==='to');$('#draw').hidden=mo.k!=='df';
   G.map=mkMap($('#qsvg'),key,mo.k[0]==='t'?340:240,items!==byMap[key]?items:null);
-  d3.select('#qsvg').classed('nb',G.diff==='b'&&mo.k!=='ab');
-  G.map.sel.on('click',(e,d)=>pick(d));
+  d3.select('#qsvg').classed('nb',G.diff==='b'&&!['ab','cs','ts'].includes(mo.k));
+  G.map.sel.on('click',(e,d)=>pick(d));G.map.hsel.on('click',(e,d)=>pick(d.it));
   next();
 }
 function prog(){$('#prog').textContent=Math.min(G.i+1,G.q.length)+' / '+G.q.length+' · ✓ '+G.ok}
@@ -390,9 +473,13 @@ function next(f){
   if(G.i>=G.q.length)return finish();
   const it=G.cur=G.q[G.i],k=G.mo.k;
   G.tries=0;G.busy=false;G.done=false;
-  G.map.sel.attr('class',d=>'c'+(d.ln?' ln':'')+(G.set.has(d)?'':' dim')+(G.diff!=='h'&&G.marks[d.id]?' '+G.marks[d.id]:''));
-  G.map.reset();
+  G.map.sel.attr('class',d=>'c'+(d.ln?' ln':'')+(d.pt?' pt':'')+(d.d?' zn':'')+(G.set.has(d)?'':' dim')+(G.diff!=='h'&&G.marks[d.id]?' '+G.marks[d.id]:''));
   $('#prompt').innerHTML=
+    k==='cs'?'Finde: <b>'+esc(it.name)+'</b>':
+    k==='ts'?'Wie heißt die markierte Stadt?':
+    k==='tzp'?'Welche erste Ziffer hat die Postleitzahl im markierten Gebiet?':
+    k==='tzv'?'Welche erste Ziffer hat die Vorwahl (nach der 0) im markierten Gebiet?':
+    k==='tza'?'In welcher Autobahn-Region liegt das Gebiet? (erste Ziffer der Nummer)':
     k==='ab'?'Finde die Autobahn <b>'+esc(it.name)+'</b>':
     k==='cn'?'Finde: <b>'+esc(it.name)+'</b>':
     k==='cf'?flag(it)+'<span>Wo liegt dieses Land?</span>':
@@ -406,7 +493,7 @@ function next(f){
   if(k==='df')initDraw();
   if(k[0]==='t'){
     $('#ans').value='';$('#ans').readOnly=false;$('#fb').textContent='';$('#fb').className='';$('#go').textContent='Prüfen';
-    if(!G.mo.nomap){G.map.sel.filter(d=>d===it).attr('class','c hint');G.map.zoomTo(it)}
+    if(!G.mo.nomap){G.map.sel.filter(d=>d===it).classed('hint',true);G.map.zoomTo(it)}
     if(f===true)$('#ans').focus();
   }
   prog();
@@ -430,15 +517,15 @@ $('#tf').onsubmit=e=>{
   if(G.done){G.i++;return next()}
   const it=G.cur,v=$('#ans').value.trim();if(!v)return;
   const tc=G.mo.k==='tc',c=tc?[it.cap,...it.capalt]:[it.name,...it.alt];
-  const ok=c.some(x=>match(v,x));
+  const ok=c.some(x=>match(v,x)),canon=tc?it.cap:it.name,exact=norm(v)===norm(canon);
   G.done=true;$('#ans').readOnly=true;
   $('#fb').className=ok?'ok':'bad';
-  $('#fb').textContent=ok?'Richtig!':'Richtig wäre: '+(tc?it.cap:it.name);
-  if(!G.mo.nomap)G.map.sel.filter(d=>d===it).attr('class','c '+(ok?'ok':'bad'));
+  $('#fb').textContent=ok?(exact?'Richtig!':'Richtig – korrekt geschrieben: '+canon):'Richtig wäre: '+canon;
+  if(!G.mo.nomap)G.map.sel.filter(d=>d===it).classed('hint',false).classed(ok?'ok':'bad',true);
   G.marks[it.id]=ok?'ok':'bad';
   if(ok)G.ok++;else G.miss.push(it);
   $('#go').textContent='Weiter';prog();
-  if(ok)setTimeout(()=>{if(G&&G.cur===it&&G.done){G.i++;next(true)}},800);
+  if(ok&&exact)setTimeout(()=>{if(G&&G.cur===it&&G.done){G.i++;next(true)}},800);
 };
 function finish(){
   if(!G.only){H.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now(),map:G.sm,mode:G.mo.k,diff:G.diff,ok:G.ok,n:G.q.length});saveQS()}
@@ -503,13 +590,16 @@ function renderStats(){
   if(!keys.length){$('#sgroups').innerHTML='';$('#stable').innerHTML='<p class="s">Noch keine Ergebnisse – spiele ein Quiz zu Ende.</p>';return}
   if(!keys.includes(ST))ST=keys[0];
   $('#sgroups').innerHTML=keys.map(k=>'<button class="chip '+(k===ST?'on':'')+'" data-sg="'+esc(k)+'">'+esc(gname(k))+'</button>').join('');
-  const p=x=>Math.round(100*x.ok/x.n);
+  const p=x=>Math.round(100*x.ok/x.n),DN={n:'Normal',h:'Hard',b:'Ohne Grenzen'};
   const rows=MODES.map(m=>{
-    const h=H.filter(x=>x.map===ST&&x.mode===m.k);if(!h.length)return'';
-    const l=h.slice().sort((a,b)=>a.t-b.t);
-    return'<tr><td>'+m.t+'</td><td>'+h.length+'</td><td>'+p(l[l.length-1])+' %</td><td>'+Math.max(...h.map(p))+' %</td><td>'+Math.round(h.reduce((s,x)=>s+p(x),0)/h.length)+' %</td></tr>';
+    const hm=H.filter(x=>x.map===ST&&x.mode===m.k);if(!hm.length)return'';
+    return'<tr class="mh"><td colspan="5">'+m.t+'</td></tr>'+['n','h','b'].map(d=>{
+      const h=hm.filter(x=>(x.diff||'n')===d);if(!h.length)return'';
+      const l=h.slice().sort((a,b)=>a.t-b.t);
+      return'<tr><td>'+DN[d]+'</td><td>'+h.length+'</td><td>'+p(l[l.length-1])+' %</td><td>'+Math.max(...h.map(p))+' %</td><td>'+Math.round(h.reduce((s,x)=>s+p(x),0)/h.length)+' %</td></tr>';
+    }).join('');
   }).join('');
-  $('#stable').innerHTML='<table><tr><th>Modus</th><th>Läufe</th><th>Zuletzt</th><th>Best</th><th>Ø</th></tr>'+rows+'</table>';
+  $('#stable').innerHTML='<table><tr><th>Stufe</th><th>Läufe</th><th>Zuletzt</th><th>Best</th><th>Ø</th></tr>'+rows+'</table>';
 }
 $('#gostats').onclick=()=>{renderStats();show('stats')};
 document.querySelectorAll('.back').forEach(b=>b.onclick=()=>{renderHome();show('home')});
