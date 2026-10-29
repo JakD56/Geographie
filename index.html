@@ -4,11 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kartenquiz">
+<meta name="theme-color" content="#0b3d6b">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="apple-touch-icon.png">
 <meta name="color-scheme" content="light dark">
 <title>Kartenquiz</title>
 <style>
-:root{--bg:#f1f5f4;--card:#fff;--ink:#13293d;--mut:#5b7083;--line:#d3dde4;--sea:#9cc5de;--land:#fbfbf8;--edge:#7f9bb0;--dim:#d8e0dc;--acc:#0e6ba8;--ok:#2f9e63;--bad:#d64550;--hint:#f29e4c;--warn:#f6d743}
-@media(prefers-color-scheme:dark){:root{--bg:#0e1a24;--card:#16283a;--ink:#e6eef4;--mut:#8aa0b2;--line:#27405a;--sea:#0a2540;--land:#3a5f7a;--edge:#5a7a92;--dim:#1a2f3f;--acc:#4fa8e0}}
+:root{--bg:#f1f5f4;--card:#fff;--ink:#13293d;--mut:#5b7083;--line:#d3dde4;--sea:#9cc5de;--land:#fbfbf8;--edge:#7f9bb0;--dim:#d8e0dc;--acc:#0e6ba8;--ok:#2f9e63;--bad:#d64550;--hint:#f29e4c;--warn:#f6d743;--dot:#ffe58a}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1a24;--card:#16283a;--ink:#e6eef4;--mut:#8aa0b2;--line:#27405a;--sea:#0a2540;--land:#3a5f7a;--dot:#e3c86a;--edge:#5a7a92;--dim:#1a2f3f;--acc:#4fa8e0}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
@@ -58,9 +62,11 @@ svg .c.ln.ok{stroke:var(--ok)}svg .c.ln.bad{stroke:var(--bad)}svg .c.ln.warn{str
 .c.pt.ok{fill:var(--ok)}.c.pt.bad{fill:var(--bad)}.c.pt.warn{fill:var(--warn)}.c.pt.hint{fill:var(--hint)}
 .c.zn{stroke:var(--f,var(--land));stroke-width:.8px}
 .zb{fill:none;stroke:var(--ink);stroke-width:calc(var(--sw,1)*1.2px);pointer-events:none}svg.nb .zb{display:none}
-#statsTop{position:sticky;top:0;z-index:6;background:var(--bg);margin:0 -16px;padding:0 16px 6px}
-th{position:sticky;top:var(--sth,0);background:var(--bg);z-index:4}
+#statsTop{position:sticky;top:0;z-index:6;background:var(--bg);margin:0 -16px;padding:0 16px 2px}
+th{position:sticky;top:calc(var(--sth,0px) - 2px);background:var(--bg);z-index:4}
 tr.mh td{text-align:left;font-weight:600;padding-top:14px}
+svg .c.dot{fill:var(--dot);stroke:var(--ink);stroke-width:1px;vector-effect:non-scaling-stroke;pointer-events:all}
+svg .c.dot.ok{fill:var(--ok)}svg .c.dot.bad{fill:var(--bad)}svg .c.dot.warn{fill:var(--warn)}svg .c.dot.hint{fill:var(--hint)}
 #score{font-size:34px;font-weight:700;margin:20px 0 4px;letter-spacing:-.02em}
 </style>
 </head>
@@ -147,7 +153,7 @@ REST=['https://cdn.jsdelivr.net/npm/world-countries@5/countries.json','https://r
 DE=['https://cdn.jsdelivr.net/gh/isellsoap/deutschlandGeoJSON@main/2_bundeslaender/3_mittel.geo.json','https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/3_mittel.geo.json','https://cdn.jsdelivr.net/gh/isellsoap/deutschlandGeoJSON@main/2_bundeslaender/4_niedrig.geo.json','https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/4_niedrig.geo.json'];
 const getJSON=async us=>{const er=[];for(const u of us){try{const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}catch(e){er.push(new URL(u).hostname+': '+e.message)}}throw new Error(er.join(' | '))};
 
-const MAPS={world:{n:'Welt (UN)',b:[[-170,-56],[189.9,83.5]],ng:1,rot:10},worldx:{n:'Welt ohne Inselstaaten',b:[[-170,-56],[189.9,83.5]],ng:1,rot:10},eu:{n:'Europa',b:[[-25,34],[45,71.5]]},as:{n:'Asien',b:[[25,-11.5],[146.5,56]]},af:{n:'Afrika',b:[[-26,-35],[58.5,37.5]]},na:{n:'Nordamerika',b:[[-170,6.5],[-52,74]]},sa:{n:'Südamerika',b:[[-82,-56],[-34.5,12.6]]},oc:{n:'Ozeanien',b:[[113,-47.5],[190,15]],rot:150},de:{n:'Deutschland',b:[[5.8,47.2],[15.2,55.1]]}};
+const MAPS={world:{n:'Welt (UN)',b:[[-168.8,-56],[189.9,83.5]],ng:1,rot:10,wrap:1},worldx:{n:'Welt ohne Inselstaaten',b:[[-168.8,-56],[189.9,83.5]],ng:1,rot:10,wrap:1},eu:{n:'Europa',b:[[-25,34],[45,71.5]]},as:{n:'Asien',b:[[25,-11.5],[146.5,56]]},af:{n:'Afrika',b:[[-26,-35],[58.5,37.5]]},na:{n:'Nordamerika',b:[[-170,6.5],[-52,74]]},sa:{n:'Südamerika',b:[[-82,-56],[-34.5,12.6]]},oc:{n:'Ozeanien',b:[[113,-47.5],[190,15]],rot:150},de:{n:'Deutschland',b:[[5.8,47.2],[15.2,55.1]]}};
 const MODES=[
  {k:'cn',t:'Stecknadel',d:'Der Name wird gezeigt, du setzt die Stecknadel auf die Karte.'},
  {k:'tn',t:'Eingeben',d:'Ein Gebiet leuchtet auf, du schreibst den Namen.'},
@@ -167,15 +173,15 @@ const MODES=[
 const GR=['Länder','Flaggen','Hauptstädte','Städte','Umriss','Deutschland'],MG={ab:'Deutschland',tzp:'Deutschland',tzv:'Deutschland',tza:'Deutschland',cs:'Städte',ts:'Städte',cn:'Länder',tn:'Länder',cf:'Flaggen',tf:'Flaggen',df:'Flaggen',cc:'Hauptstädte',tc:'Hauptstädte',to:'Umriss'};
 MODES.forEach(m=>m.g=MG[m.k]);
 const ABW={
-1:[[11.22,54.5],[10.88,54.29],[10.81,54.09],[10.69,53.87],[10.25,53.73],[10.1,53.55],[9.99,53.45],[9.6,53.33],[9.2,53.2],[8.85,53.05],[8.45,52.85],[8.27,52.66],[8.1,52.3],[7.86,52.18],[7.67,51.96],[7.58,51.6],[7.47,51.43],[7.3,51.3],[7.18,51.2],[7.0,51.05],[6.95,50.95],[6.8,50.65],[6.65,50.43],[6.83,50.2],[6.9,49.97],[6.7,49.76],[6.85,49.6],[7.04,49.48],[7.05,49.22]],
-2:[[6.85,51.5],[6.98,51.57],[7.2,51.61],[7.5,51.68],[7.82,51.7],[8.3,51.85],[8.55,52.0],[8.9,52.2],[9.3,52.3],[9.8,52.4],[10.2,52.3],[10.5,52.27],[11.0,52.2],[11.65,52.1],[12.0,52.3],[12.5,52.4],[13.0,52.4]],
-3:[[6.25,51.83],[6.6,51.65],[6.78,51.43],[6.9,51.3],[6.95,51.15],[7.0,51.0],[7.05,50.93],[7.2,50.8],[7.65,50.5],[8.03,50.39],[8.25,50.2],[8.35,50.08],[8.7,50.05],[8.95,50.08],[9.15,49.97],[9.6,49.85],[9.95,49.78],[10.4,49.7],[10.8,49.55],[11.05,49.4],[11.5,49.2],[12.05,49.0],[12.6,48.9],[13.05,48.75],[13.45,48.57]],
-4:[[[6.05,50.78],[6.45,50.8],[6.7,50.88],[7.0,50.93],[7.3,50.97],[7.55,51.0],[7.85,51.03]],[[9.57,50.82],[9.85,50.88],[10.32,50.97],[10.7,50.95],[11.03,50.98],[11.3,50.98],[11.6,50.93],[12.08,50.88],[12.5,50.85],[12.92,50.83],[13.35,50.95],[13.74,51.05],[14.2,51.15],[14.6,51.15],[14.99,51.15]]],
-5:[[9.27,50.75],[8.95,50.65],[8.7,50.55],[8.7,50.35],[8.65,50.15],[8.62,50.0],[8.65,49.85],[8.62,49.65],[8.65,49.45],[8.65,49.3],[8.45,49.05],[8.2,48.75],[7.95,48.47],[7.85,48.25],[7.85,48.0],[7.6,47.78],[7.58,47.6]],
-6:[[7.0,49.2],[7.18,49.35],[7.5,49.42],[7.75,49.44],[8.2,49.5],[8.47,49.5],[8.65,49.3],[8.9,49.25],[9.2,49.15],[9.7,49.1],[10.1,49.15],[10.55,49.3],[11.05,49.4],[11.5,49.45],[11.85,49.45],[12.15,49.65],[12.5,49.65]],
-7:[[9.4,54.8],[9.5,54.5],[9.65,54.3],[9.98,54.07],[9.9,53.65],[9.95,53.5],[9.95,53.4],[9.8,52.95],[9.65,52.75],[9.75,52.4],[9.9,52.15],[9.95,51.8],[9.95,51.55],[9.5,51.3],[9.6,50.9],[9.7,50.55],[9.9,50.2],[10.15,49.95],[9.95,49.78],[10.1,49.45],[10.15,49.15],[10.1,48.8],[9.95,48.4],[10.2,48.0],[10.3,47.72],[10.65,47.58]],
-8:[[6.4,49.47],[6.75,49.35],[7.18,49.35],[7.37,49.25],[7.8,49.2],[8.35,49.0],[8.7,48.9],[9.15,48.75],[9.65,48.7],[9.95,48.4],[10.28,48.45],[10.9,48.37],[11.4,48.2],[11.7,48.1],[12.1,47.85],[12.65,47.82],[12.95,47.78]],
-9:[[13.1,52.35],[12.85,52.1],[12.65,51.85],[12.25,51.8],[12.1,51.55],[12.3,51.3],[11.95,51.0],[11.9,50.7],[11.9,50.3],[11.6,49.95],[11.55,49.75],[11.1,49.45],[11.4,48.9],[11.55,48.6],[11.6,48.2]]};
+1:[[11.22,54.5],[10.98,54.37],[10.88,54.29],[10.81,54.09],[10.75,53.98],[10.69,53.87],[10.45,53.82],[10.27,53.73],[10.1,53.56],[10.02,53.5],[9.98,53.45],[9.87,53.33],[9.65,53.3],[9.5,53.28],[9.15,53.12],[8.85,53.03],[8.5,52.95],[8.25,52.87],[8.2,52.72],[8.1,52.45],[8.05,52.28],[7.86,52.18],[7.7,51.95],[7.62,51.78],[7.58,51.6],[7.5,51.5],[7.47,51.4],[7.3,51.3],[7.18,51.2],[7.05,51.1],[6.97,50.98],[6.85,50.75],[6.7,50.55],[6.65,50.43],[6.83,50.2],[6.9,49.97],[6.75,49.8],[6.85,49.6],[7.0,49.5],[7.04,49.38],[7.05,49.22]],
+2:[[6.85,51.5],[6.98,51.57],[7.2,51.61],[7.5,51.68],[7.82,51.7],[8.1,51.78],[8.3,51.85],[8.55,52.0],[8.7,52.1],[8.9,52.2],[9.3,52.3],[9.55,52.35],[9.8,52.4],[10.2,52.3],[10.5,52.27],[10.75,52.2],[11.0,52.2],[11.4,52.15],[11.65,52.1],[12.0,52.3],[12.5,52.4],[13.0,52.4]],
+3:[[6.25,51.83],[6.5,51.7],[6.6,51.62],[6.7,51.5],[6.78,51.43],[6.9,51.3],[6.95,51.15],[7.0,51.0],[7.05,50.93],[7.2,50.8],[7.4,50.65],[7.65,50.5],[7.85,50.43],[8.03,50.39],[8.25,50.2],[8.35,50.08],[8.7,50.05],[8.95,50.08],[9.15,49.97],[9.4,49.9],[9.6,49.85],[9.95,49.78],[10.4,49.7],[10.8,49.55],[11.05,49.4],[11.5,49.2],[11.8,49.05],[12.05,49.0],[12.6,48.9],[13.05,48.75],[13.45,48.57]],
+4:[[[6.05,50.78],[6.25,50.78],[6.45,50.8],[6.7,50.88],[6.9,50.93],[7.0,50.93],[7.3,50.97],[7.55,51.0],[7.7,51.02],[7.85,51.03]],[[9.57,50.82],[9.85,50.88],[10.1,50.93],[10.32,50.97],[10.7,50.95],[11.03,50.98],[11.3,50.98],[11.6,50.93],[11.85,50.9],[12.08,50.88],[12.5,50.85],[12.92,50.83],[13.35,50.95],[13.74,51.05],[14.2,51.15],[14.6,51.15],[14.99,51.15]]],
+5:[[9.27,50.75],[9.1,50.7],[8.95,50.65],[8.7,50.55],[8.72,50.45],[8.7,50.35],[8.65,50.15],[8.62,50.0],[8.65,49.85],[8.62,49.65],[8.65,49.45],[8.65,49.3],[8.55,49.15],[8.45,49.05],[8.35,48.9],[8.2,48.75],[8.0,48.55],[7.95,48.47],[7.85,48.25],[7.85,48.0],[7.7,47.85],[7.6,47.78],[7.58,47.6]],
+6:[[7.0,49.2],[7.18,49.35],[7.5,49.42],[7.75,49.44],[8.0,49.48],[8.2,49.5],[8.47,49.5],[8.65,49.3],[8.9,49.25],[9.2,49.15],[9.45,49.12],[9.7,49.1],[10.1,49.15],[10.3,49.2],[10.55,49.3],[10.85,49.38],[11.05,49.4],[11.3,49.43],[11.5,49.45],[11.85,49.45],[12.15,49.65],[12.5,49.65]],
+7:[[9.4,54.8],[9.45,54.65],[9.5,54.5],[9.65,54.3],[9.8,54.15],[9.98,54.07],[9.95,53.85],[9.9,53.65],[9.95,53.5],[9.95,53.4],[9.9,53.15],[9.8,52.95],[9.65,52.75],[9.75,52.55],[9.75,52.4],[9.9,52.15],[9.95,51.95],[9.95,51.8],[9.95,51.55],[9.7,51.4],[9.5,51.3],[9.55,51.1],[9.6,50.9],[9.7,50.55],[9.8,50.35],[9.9,50.2],[10.15,49.95],[9.95,49.78],[10.0,49.6],[10.1,49.45],[10.15,49.15],[10.1,48.8],[10.0,48.6],[9.95,48.4],[10.1,48.2],[10.2,48.0],[10.3,47.72],[10.65,47.58]],
+8:[[6.4,49.47],[6.55,49.4],[6.75,49.35],[7.18,49.35],[7.37,49.25],[7.6,49.2],[7.8,49.2],[8.1,49.0],[8.35,49.0],[8.7,48.9],[8.95,48.82],[9.15,48.75],[9.4,48.7],[9.65,48.7],[9.8,48.55],[9.95,48.4],[10.28,48.45],[10.6,48.4],[10.9,48.37],[11.15,48.25],[11.4,48.2],[11.7,48.1],[11.9,47.95],[12.1,47.85],[12.4,47.82],[12.65,47.82],[12.95,47.78]],
+9:[[13.1,52.35],[12.95,52.2],[12.85,52.1],[12.7,51.95],[12.65,51.85],[12.25,51.8],[12.1,51.55],[12.3,51.3],[12.1,51.1],[11.95,51.0],[11.9,50.7],[11.9,50.5],[11.9,50.3],[11.7,50.1],[11.6,49.95],[11.55,49.75],[11.3,49.6],[11.1,49.45],[11.25,49.15],[11.4,48.9],[11.5,48.75],[11.55,48.6],[11.6,48.4],[11.6,48.2]]};
 const ABI=Object.entries(ABW).map(([n,c])=>({id:'ab'+n,name:'A '+n,alt:[],cap:null,capalt:[],iso:null,cc:'',ln:1,f:{type:'Feature',geometry:{type:Array.isArray(c[0][0])?'MultiLineString':'LineString',coordinates:c}}}));
 const ZT='13.74,51.05,031;12.37,51.34,031;12.92,50.83,037;14.33,51.76,031;11.97,51.48,031;12.08,50.88,037;14.99,51.15,031;12.14,50.5,037;12.24,51.83,031;14.42,51.18,03-;12.5,50.72,037;11.59,50.93,037;11.37,50.65,03-;12.44,50.99,03-;11.8,51.15,03-;11.55,51.53,03-;12.32,51.62,03-;12.65,51.87,03-;11.97,51.75,03-;13.0,51.56,03-;14.23,51.43,03-;13.7,51.63,03-;14.37,51.57,03-;11.15,51.79,03-;11.3,51.47,03-;12.2,50.65,03-;11.34,50.72,03-;12.14,51.05,03-;13.47,51.16,03-;13.93,50.96,03-;13.4,52.52,131;13.07,52.4,131;14.55,52.35,131;12.8,52.93,13-;14.28,53.06,13-;13.26,53.56,131;13.38,54.09,132;13.08,54.31,132;12.14,54.09,131;11.41,53.63,131;12.56,52.41,13-;13.86,53.32,13-;11.86,53.07,13-;11.5,53.33,13-;11.85,53.43,13-;11.19,53.43,13-;13.08,51.99,13-;13.17,52.08,13-;12.6,52.14,13-;14.65,52.15,13-;12.18,53.8,13-;12.67,53.52,13-;13.99,53.5,13-;13.8,52.83,13-;12.49,53.16,13-;12.34,52.6,13-;11.63,52.12,331;11.46,53.9,232;11.11,53.89,23-;11.19,53.86,23-;11.86,52.6,33-;11.05,51.9,333;11.15,52.85,23-;11.85,52.27,33-;12.08,51.97,33-;11.03,50.98,937;10.32,50.97,937;10.7,50.95,93-;10.46,51.21,93-;10.79,51.5,933;10.69,50.61,937;10.42,50.57,93-;10.73,50.43,93-;10.95,50.84,93-;11.1,51.16,93-;11.33,50.98,93-;11.52,51.02,93-;10.9,50.68,93-;10.15,51.38,333;10.87,51.37,93-;9.99,53.55,442;10.14,54.32,442;10.69,53.87,442;9.44,54.78,442;8.8,53.08,442;8.21,53.14,442;10.41,53.25,442;8.7,53.87,442;7.2,53.37,243;8.1,53.53,242;9.05,54.48,242;10.08,52.62,253;10.56,52.97,25-;9.84,52.99,25-;9.6,52.86,25-;9.41,53.11,24-;9.23,52.92,24-;9.48,53.6,242;7.45,53.23,24-;7.4,53.08,24-;8.58,53.55,242;9.1,54.2,24-;9.5,53.92,24-;9.98,54.07,24-;10.76,53.7,24-;8.83,52.91,24-;8.8,52.68,24-;8.3,54.9,24-;10.62,54.14,24-;10.55,53.37,24-;11.14,52.97,25-;10.69,53.63,24-;9.73,52.37,353;10.53,52.27,353;9.93,51.53,353;9.5,51.31,354;9.95,52.15,353;10.78,52.42,353;8.75,51.72,353;8.53,52.02,353;8.92,52.29,353;8.88,51.94,35-;8.38,51.9,35-;9.36,52.1,35-;9.2,52.64,35-;10.55,52.48,35-;9.14,51.49,35-;8.87,51.27,35-;10.43,51.9,35-;10.35,52.15,353;8.67,52.12,35-;8.9,52.03,35-;9.38,51.77,35-;10.05,51.19,35-;8.37,52.6,453;8.05,52.28,453;7.32,52.52,453;7.07,52.43,45-;7.29,52.69,45-;7.44,52.28,45-;8.28,52.73,44-;8.05,52.85,44-;7.72,52.28,45-;9.68,50.55,366;8.77,50.8,364;8.67,50.58,364;8.5,50.55,36-;9.7,50.87,36-;9.53,50.35,36-;8.8,51.06,36-;9.2,50.92,36-;8.68,50.11,666;8.24,50.08,666;8.65,49.87,666;8.92,50.13,666;8.06,50.39,66-;9.15,49.97,666;8.62,50.23,66-;8.75,50.33,66-;8.77,50.1,66-;9.19,50.2,66-;9.11,50.29,66-;9.26,49.7,96-;8.62,49.68,66-;8.41,49.99,66-;8.27,50.22,66-;8.27,50.0,566;7.87,49.85,566;7.9,49.97,56-;8.12,49.75,56-;8.36,49.63,666;8.47,49.49,666;8.44,49.48,66-;8.69,49.4,666;8.65,49.3,66-;8.43,49.32,66-;8.14,49.35,66-;8.17,49.46,66-;7.77,49.44,666;7.6,49.2,666;7.37,49.25,66-;7.18,49.35,66-;7.0,49.23,666;6.64,49.44,66-;6.75,49.31,66-;7.4,49.54,66-;7.6,49.65,66-;9.15,49.35,76-;9.32,49.52,76-;8.12,49.2,76-;6.64,49.76,564;6.52,49.97,56-;6.9,49.99,56-;7.31,49.71,56-;7.6,50.36,524;7.47,50.43,52-;7.82,50.43,52-;7.65,50.69,52-;7.22,50.33,52-;7.17,50.15,52-;7.82,50.66,52-;7.87,50.79,52-;8.02,50.87,524;6.96,50.94,525;7.1,50.73,525;6.08,50.78,525;6.98,51.03,525;6.49,50.8,52-;6.79,50.66,52-;7.13,50.99,52-;6.36,50.92,52-;6.1,51.06,52-;6.77,51.23,425;6.59,51.34,425;6.69,51.2,425;6.44,51.2,425;6.39,51.26,42-;7.15,51.26,424;7.08,51.17,42-;7.19,51.18,42-;7.01,51.46,424;6.76,51.43,424;7.47,51.51,424;7.22,51.48,424;7.1,51.52,42-;6.85,51.47,42-;6.93,51.52,42-;7.2,51.61,42-;6.63,51.45,42-;6.62,51.65,42-;6.62,51.84,42-;7.63,51.96,424;7.53,51.62,42-;7.17,51.94,42-;7.01,52.08,42-;8.0,51.95,42-;7.03,52.21,42-;6.14,51.79,42-;7.47,51.36,524;7.82,51.68,52-;8.11,51.57,52-;7.7,51.37,52-;8.35,51.67,52-;7.85,51.03,52-;7.57,51.03,52-;7.63,51.22,52-;8.06,51.4,52-;8.57,51.4,52-;8.28,51.35,52-;9.18,48.78,778;8.4,49.01,778;7.85,48.0,778;9.22,49.14,778;9.06,48.52,778;7.94,48.47,778;8.7,48.89,778;8.46,48.06,778;7.66,47.62,77-;9.17,47.66,778;8.88,49.25,77-;8.6,49.12,77-;8.27,49.05,77-;9.74,49.11,77-;10.07,49.14,77-;10.1,48.84,77-;9.65,48.7,77-;9.2,48.09,77-;8.82,47.98,77-;9.2,48.49,77-;8.24,48.76,77-;7.87,48.34,77-;8.2,47.62,77-;8.84,47.76,77-;8.74,48.71,77-;9.77,49.49,97-;9.69,49.28,77-;8.36,49.22,77-;9.99,48.4,878;10.15,48.68,87-;9.79,48.1,87-;9.73,48.28,87-;9.61,47.78,87-;9.48,47.65,87-;9.17,47.77,87-;10.0,48.39,87-;9.93,49.79,938;11.58,48.14,889;10.9,48.37,889;12.12,47.86,889;11.42,48.76,889;10.31,47.73,889;12.15,48.54,889;11.1,47.5,889;10.18,47.98,889;13.46,48.57,989;12.83,48.17,88-;11.74,48.4,88-;11.5,48.53,88-;11.18,48.73,88-;11.19,48.89,88-;12.5,48.63,88-;12.64,47.87,88-;10.88,48.05,88-;10.7,47.57,88-;10.28,48.45,88-;10.48,48.05,88-;9.68,47.55,88-;12.76,48.4,88-;12.52,48.25,88-;11.43,48.26,88-;10.49,48.85,89-;10.78,48.72,89-;10.49,48.57,89-;11.08,49.45,997;11.58,49.94,997;10.89,49.89,997;11.92,50.32,997;10.23,50.05,997;10.96,50.26,997;12.1,49.02,999;12.16,49.68,999;11.86,49.44,999;12.57,48.88,999;12.96,48.84,999;10.57,49.3,99-;11.46,49.28,99-;11.87,48.91,99-;10.18,49.38,99-;10.32,49.07,99-;10.76,49.12,99-;10.97,49.03,99-;9.5,49.76,99-;10.08,50.2,99-;11.45,50.1,99-;12.66,49.22,99-;12.1,49.33,99-;11.0,49.6,99-;11.06,49.72,99-;12.08,50.0,99-;9.66,49.62,99-';
 const ZS={zp:{},zv:{},za:{}};
@@ -244,10 +250,14 @@ function build(topo,countries,de){
     const mg=topojson.merge(topo,[cy,nc]);
     feats=feats.filter(f=>f.properties.name!=='N. Cyprus').map(f=>String(f.id)==='196'?{type:'Feature',id:f.id,properties:f.properties,geometry:mg}:f);
   }
-  byMap.bgf=feats.filter(f=>{const c=cm[String(f.id).padStart(3,'0')];if(!c)return['Somaliland','Kosovo'].includes(f.properties.name);return c.unMember||EXTRA.has(c.cca2.toLowerCase())||c.area>=30000});
+  const nmM={},asg=new Map(),usd=new Set();
+  countries.forEach(c=>nmM[c.name.common]=c);
+  feats.forEach(f=>{const c=nmM[f.properties.name];if(c&&!usd.has(c.cca2)){asg.set(f,c);usd.add(c.cca2)}});
+  feats.forEach(f=>{if(asg.has(f))return;const c=cm[String(f.id).padStart(3,'0')];if(c&&!usd.has(c.cca2)){asg.set(f,c);usd.add(c.cca2)}});
+  byMap.bgf=feats.filter(f=>{const c=asg.get(f);if(!c)return['Somaliland','Kosovo'].includes(f.properties.name);return c.unMember||EXTRA.has(c.cca2.toLowerCase())||c.area>=30000});
   const all=[];
   feats.forEach(f=>{
-    const c=cm[String(f.id).padStart(3,'0')];
+    const c=asg.get(f);
     if(!c){
       if(f.properties.name==='Kosovo')all.push({id:'wxk',name:'Kosovo',alt:[],cap:'Pristina',capalt:['Priština','Prishtina'],iso:'xk',cc:'xk',cont:'eu',un:false,f});
       return;
@@ -258,7 +268,17 @@ function build(topo,countries,de){
     const cap=(c.capital||[])[0];
     all.push({id:'w'+c.ccn3,name:(c.translations&&c.translations.deu&&c.translations.deu.common)||c.name.common,alt:[c.name.common],cap:cap&&(DECAP[cap]||cap),capalt:cap?[cap]:[],iso:cca,cc:cca,cont,f,un:!!c.unMember});
   });
-  all.filter(i=>ISL.has(i.cc)).forEach(i=>HIDE.add(i.f));
+  const have=new Set(all.map(i=>i.cc));
+  countries.forEach(c=>{
+    const cca=c.cca2.toLowerCase();
+    if(have.has(cca)||!(c.unMember||EXTRA.has(cca))||!c.latlng)return;
+    const r0=c.region,s2=c.subregion,cont=r0==='Europe'?'eu':r0==='Asia'?'as':r0==='Africa'?'af':r0==='Oceania'?'oc':r0==='Americas'?(s2==='South America'?'sa':'na'):null;
+    if(!cont)return;
+    const cap=(c.capital||[])[0];
+    all.push({id:'w'+(c.ccn3||cca),name:(c.translations&&c.translations.deu&&c.translations.deu.common)||c.name.common,alt:[c.name.common],cap:cap&&(DECAP[cap]||cap),capalt:cap?[cap]:[],iso:cca,cc:cca,cont,un:!!c.unMember,pt:[c.latlng[1],c.latlng[0]],mp:1});
+  });
+  byMap.mpn=all.filter(i=>i.mp).map(i=>i.name);
+  all.filter(i=>ISL.has(i.cc)&&i.f).forEach(i=>HIDE.add(i.f));
   byMap.ab=ABI;
   byMap.cde=CITY(CDE,CALT);byMap.cw=CITY(CWT,CALT);
   Object.keys(ZS).forEach(k=>byMap[k]=Object.keys(ZS[k]).map(d=>({id:k+d,name:d,alt:[],cap:null,capalt:[],iso:null,cc:''})));
@@ -276,11 +296,12 @@ function build(topo,countries,de){
 const pts=([[w,s],[e,n]])=>{const o=[];for(let t=0;t<=6;t++){const x=w+(e-w)*t/6,y=s+(n-s)*t/6;o.push([x,s],[x,n],[w,y],[e,y])}return o};
 const grow=([[w,s],[e,n]],L)=>{const dx=(e-w)*.03,dy=(n-s)*.03;return[[Math.max(-180,w-dx),Math.max(-80,s-dy)],[Math.min(L,e+dx),Math.min(85,n+dy)]]};
 function fitBox(it){
-  let[[w,s],[e,n]]=d3.geoBounds({type:'FeatureCollection',features:it.map(i=>i.f)});
+  let[[w,s],[e,n]]=d3.geoBounds({type:'FeatureCollection',features:it.map(i=>i.f||{type:'Feature',geometry:{type:'Point',coordinates:i.pt}})});
   if(w>e){w=-180;e=180}
   const px=Math.max(0,(14-(e-w))/2),py=Math.max(0,(9-(n-s))/2),m=Math.max(2,(e-w)*.06);
   return[[Math.max(-180,w-m-px),Math.max(-80,s-m-py)],[Math.min(180,e+m+px),Math.min(84,n+m+py)]];
 }
+const ENC=new Set('fj fm ki mh nr pw sb tv to vu ws ag bs bb dm gd jm kn lc vc tt pr mv sc km cv mu st bh mt'.split(' '));
 const BASE={ab:'de',cde:'de',cw:'worldx',zp:'de',zv:'de',za:'de'};
 function mkMap(svg,key,fs,fit){
   const items=byMap[key],bk=BASE[key]||key,mw=Math.round($('main').clientWidth);
@@ -304,7 +325,12 @@ function mkMap(svg,key,fs,fit){
       pr.fitSize([W,H],mp);
     }
   }else pr.fitSize([W,H],{type:'Sphere'});
-  const path=d3.geoPath(pr),root=d3.select(svg);
+  let pr2=null;
+  if(m.wrap&&!fit&&fs){
+    pr2=d3.geoProjection((l,p)=>d3.geoNaturalEarth1Raw(l+2*Math.PI,p)).rotate(pr.rotate()).scale(pr.scale()).translate(pr.translate());
+    if(ext)ext[1][0]=Math.max(ext[1][0],pr2([-148,62])[0]);
+  }
+  const path=d3.geoPath(pr),root=d3.select(svg),dpk=pr.scale()*Math.PI/180;
   root.selectAll('*').remove();
   root.attr('viewBox','0 0 '+W+' '+H).style('width',fs?'calc(100% + 32px)':'min(100%,'+(52*W/H).toFixed(1)+'vh)').style('margin',fs?'0 -16px':null);
   const defs=root.append('defs'),g=root.append('g');
@@ -312,50 +338,73 @@ function mkMap(svg,key,fs,fit){
   g.append('g').selectAll('path').data(byMap.bgf.filter(f=>!own.has(f)&&!(bk==='worldx'&&HIDE.has(f)))).join('path').attr('d',path).attr('class','c bg');
   const gf=byMap.bgf.find(f=>String(f.id)==='276');
   if(key==='ab'||key==='cde')g.append('g').selectAll('path').data(byMap.de.length?byMap.de:[{f:gf}]).join('path').attr('d',d=>path(d.f)).attr('class','c bg2');
-  if(key==='cw')g.append('g').selectAll('path').data(byMap.worldx).join('path').attr('d',d=>path(d.f)).attr('class','c bg2');
+  if(key==='cw')g.append('g').selectAll('path').data(byMap.worldx.filter(i=>i.f)).join('path').attr('d',d=>path(d.f)).attr('class','c bg2');
   let bd='';
   if(ZS[key]){
-    defs.append('clipPath').attr('id','dec').append('path').attr('d',path(gf));
-    const gb=path.bounds(gf),P=[],L=[],ed=new Map(),cells={},ext={},fx=p=>p[0].toFixed(1)+','+p[1].toFixed(1);
-    Object.keys(ZS[key]).forEach(dg=>{cells[dg]=[];ext[dg]=[1e9,1e9,-1e9,-1e9];ZS[key][dg].forEach(sd=>{P.push(pr(sd));L.push(dg)})});
+    const cp=defs.append('clipPath').attr('id','dec');
+    cp.append('path').attr('d',path(gf));
+    byMap.de.forEach(d=>cp.append('path').attr('d',path(d.f)));
+    const gb=path.bounds(gf),P=[],L=[],ed=new Map(),cells={},ext2={},fx=p=>p[0].toFixed(1)+','+p[1].toFixed(1);
+    Object.keys(ZS[key]).forEach(dg=>{cells[dg]=[];ext2[dg]=[1e9,1e9,-1e9,-1e9];ZS[key][dg].forEach(sd=>{P.push(pr(sd));L.push(dg)})});
     const vo=d3.Delaunay.from(P).voronoi([-W,-H,2*W,2*H]);
     P.forEach((q,i)=>{
       const c=vo.cellPolygon(i);if(!c)return;
-      cells[L[i]].push(c);const e=ext[L[i]];
+      cells[L[i]].push(c);const e=ext2[L[i]];
       c.forEach(z=>{e[0]=Math.min(e[0],z[0]);e[1]=Math.min(e[1],z[1]);e[2]=Math.max(e[2],z[0]);e[3]=Math.max(e[3],z[1])});
       for(let j=0;j<c.length-1;j++){const k2=[fx(c[j]),fx(c[j+1])].sort().join('|');if(!ed.has(k2))ed.set(k2,[]);ed.get(k2).push([L[i],c[j],c[j+1]])}
     });
     items.forEach(it=>{
       it.d=cells[it.name].map(c=>'M'+c.map(fx).join('L')+'Z').join('');
-      const e=ext[it.name];it.bb=[[Math.max(gb[0][0],e[0]),Math.max(gb[0][1],e[1])],[Math.min(gb[1][0],e[2]),Math.min(gb[1][1],e[3])]];
+      const e=ext2[it.name];it.bb=[[Math.max(gb[0][0],e[0]),Math.max(gb[0][1],e[1])],[Math.min(gb[1][0],e[2]),Math.min(gb[1][1],e[3])]];
     });
     bd=[...ed.values()].filter(v=>v.length===2&&v[0][0]!==v[1][0]).map(v=>'M'+fx(v[0][1])+'L'+fx(v[0][2])).join('');
   }
-  const hl0=items.filter(i=>i.f&&HL.has(i.cc)&&i.f.geometry.type==='MultiPolygon'&&i.f.geometry.coordinates.length>1).map(i=>{
-    const q=[];i.f.geometry.coordinates.forEach(pl=>pl[0].forEach(c=>{const z=pr(c);if(z)q.push(z)}));
-    const h=d3.polygonHull(q);if(!h)return null;
-    const cx=d3.mean(h,z=>z[0]),cy=d3.mean(h,z=>z[1]);
-    const hp=h.map(z=>{const dx=z[0]-cx,dy=z[1]-cy,l=Math.hypot(dx,dy)||1;return[z[0]+dx/l*1.5,z[1]+dy/l*1.5]});
-    const xs=hp.map(z=>z[0]),ys=hp.map(z=>z[1]);
-    return{bx:[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)],it:i,d:'M'+hp.map(z=>z[0].toFixed(1)+','+z[1].toFixed(1)).join('L')+'Z',sz:Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))};
-  }).filter(h=>h&&h.sz<80).sort((a,b)=>a.sz-b.sz);
-  const hl=[];hl0.forEach(h=>{if(!hl.some(o=>h.bx[0]<o.bx[2]&&h.bx[2]>o.bx[0]&&h.bx[1]<o.bx[3]&&h.bx[3]>o.bx[1]))hl.push(h)});
-  const hsel=g.append('g').selectAll('path').data(hl).join('path').attr('d',d=>d.d).attr('class','hl');
+  /* Einkreisungen für Inselgruppen: gestrichelte Rahmen, die sich nicht überlappen */
+  const bbox=it=>{
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    const add=z=>{if(z){x0=Math.min(x0,z[0]);x1=Math.max(x1,z[0]);y0=Math.min(y0,z[1]);y1=Math.max(y1,z[1])}};
+    if(it.pt)add(pr(it.pt));
+    else(it.f.geometry.type==='Polygon'?[it.f.geometry.coordinates]:it.f.geometry.coordinates).forEach(pl=>pl[0].forEach(c=>add(pr(c))));
+    return[x0,y0,x1,y1];
+  };
+  const en=items.filter(i=>ENC.has(i.cc)&&(i.f||i.pt)).map(i=>{
+    const[a,b,c,d]=bbox(i),P0=7,mn=18;
+    let x0=a-P0,y0=b-P0,x1=c+P0,y1=d+P0;
+    if(x1-x0<mn){const q=(x0+x1)/2;x0=q-mn/2;x1=q+mn/2}
+    if(y1-y0<mn){const q=(y0+y1)/2;y0=q-mn/2;y1=q+mn/2}
+    return{it:i,r:[x0,y0,x1,y1],core:[a,b,c,d]};
+  }).filter(e=>isFinite(e.r[0])&&isFinite(e.r[3]));
+  for(let n=0;n<10;n++)en.forEach((A,i)=>en.forEach((B,j)=>{
+    if(j<=i)return;
+    const a=A.r,b=B.r,ox=Math.min(a[2],b[2])-Math.max(a[0],b[0]),oy=Math.min(a[3],b[3])-Math.max(a[1],b[1]);
+    if(ox<=0||oy<=0)return;
+    if(ox<=oy){const T=(a[0]+a[2])<(b[0]+b[2])?[A,B]:[B,A];T[0].r[2]=Math.max(T[0].core[2],T[0].r[2]-ox/2-.5);T[1].r[0]=Math.min(T[1].core[0],T[1].r[0]+ox/2+.5)}
+    else{const T=(a[1]+a[3])<(b[1]+b[3])?[A,B]:[B,A];T[0].r[3]=Math.max(T[0].core[3],T[0].r[3]-oy/2-.5);T[1].r[1]=Math.min(T[1].core[1],T[1].r[1]+oy/2+.5)}
+  }));
+  const hsel=g.append('g').selectAll('path').data(en).join('path').attr('d',e=>'M'+e.r[0].toFixed(1)+','+e.r[1].toFixed(1)+'H'+e.r[2].toFixed(1)+'V'+e.r[3].toFixed(1)+'H'+e.r[0].toFixed(1)+'Z').attr('class','hl');
+  const crv=d3.line().curve(d3.curveCatmullRom.alpha(.5));
+  const lineD=d=>(d.f.geometry.type==='MultiLineString'?d.f.geometry.coordinates:[d.f.geometry.coordinates]).map(c=>crv(c.map(z=>pr(z)))).join('');
   const lay=g.append('g'),pI=items.filter(i=>!i.pt);
-  lay.selectAll('path').data(pI).join('path').attr('d',d=>d.d||path(d.f)).attr('class',d=>'c'+(d.ln?' ln':'')+(d.d?' zn':'')).attr('clip-path',d=>d.d?'url(#dec)':null);
-  const szm=new Map(),sm=pI.filter(i=>{if(i.ln||i.d)return false;const[[x0,y0],[x1,y1]]=path.bounds(i.f),z=Math.max(x1-x0,y1-y0);szm.set(i,z);return z<6});
-  const circ=lay.selectAll('circle.sm').data(sm).join('circle').attr('cx',d=>path.centroid(d.f)[0]).attr('cy',d=>path.centroid(d.f)[1]).attr('r',3).attr('class','c sm');
-  const ptc=lay.selectAll('circle.pt').data(items.filter(i=>i.pt)).join('circle').attr('cx',d=>pr(d.pt)[0]).attr('cy',d=>pr(d.pt)[1]).attr('r',5).attr('class','c pt');
+  lay.selectAll('path').data(pI).join('path').attr('d',d=>d.d||(d.ln?lineD(d):path(d.f))).attr('class',d=>'c'+(d.ln?' ln':'')+(d.d?' zn':'')).attr('clip-path',d=>d.d?'url(#dec)':null);
+  if(pr2){const p2=d3.geoPath(pr2);lay.selectAll('path.dp').data(items.filter(i=>i.f&&(i.cc==='us'||i.cc==='ca'))).join('path').attr('d',d=>p2(d.f)).attr('class','c dp')}
+  const szd=new Map(),mpS=items.filter(i=>i.mp&&!ENC.has(i.cc));
+  mpS.forEach(i=>szd.set(i,0));
+  const sm=pI.filter(i=>{if(i.ln||i.d||ENC.has(i.cc))return false;const[[x0,y0],[x1,y1]]=path.bounds(i.f),z=Math.max(x1-x0,y1-y0)/dpk;szd.set(i,z);return z<1.9}).concat(mpS);
+  const cxy=d=>d.pt?pr(d.pt):path.centroid(d.f);
+  const circ=lay.selectAll('circle.sm').data(sm).join('circle').attr('cx',d=>cxy(d)[0]).attr('cy',d=>cxy(d)[1]).attr('r',5).attr('class','c dot sm').attr('data-t','dot');
+  const edots=lay.selectAll('circle.ed').data(en).join('circle').attr('cx',e=>(e.r[0]+e.r[2])/2).attr('cy',e=>(e.r[1]+e.r[3])/2).attr('r',6.5).attr('class','c dot ed').attr('data-t','dot').datum(e=>e.it);
+  const ptc=lay.selectAll('circle.pt').data(items.filter(i=>i.pt&&!i.mp)).join('circle').attr('cx',d=>pr(d.pt)[0]).attr('cy',d=>pr(d.pt)[1]).attr('r',5).attr('class','c pt');
   const sel=lay.selectAll('.c');
   if(bd)g.append('g').attr('clip-path','url(#dec)').append('path').attr('d',bd).attr('class','zb');
   const zoom=d3.zoom().scaleExtent([1,40]).extent([[0,0],[W,H]]).translateExtent(ext||[[0,0],[W,H]]).on('zoom',e=>{
-    const k=e.transform.k;g.attr('transform',e.transform);g.style('--sw',1/k).style('--lw',3.5/Math.sqrt(k));
-    circ.attr('r',(4+2*Math.min(1,(k-4)/4))/k).attr('display',d=>k>=4&&szm.get(d)*k<14?null:'none');
-    ptc.attr('r',5/k);
+    const k=e.transform.k,ppd=k*dpk;
+    g.attr('transform',e.transform);g.style('--sw',1/k).style('--lw',3.5/Math.sqrt(k));
+    circ.attr('r',5/k).attr('display',d=>ppd>=7.5&&szd.get(d)*ppd<14?null:'none');
+    edots.attr('r',6.5/k);ptc.attr('r',5/k);
   });
   root.call(zoom).call(zoom.transform,d3.zoomIdentity);
   return{sel,hsel,
-    ease(){const k=d3.zoomTransform(svg).k;if(k>1.05)root.transition().duration(350).call(zoom.scaleTo,1+(k-1)*.5)},
+    ease(){const k=d3.zoomTransform(svg).k;if(k>1.05)root.transition().duration(350).call(zoom.scaleTo,1+(k-1)*.3)},
     reset(){root.transition().duration(300).call(zoom.transform,d3.zoomIdentity)},
     zoomTo(d){
       let cx,cy,k;
@@ -439,7 +488,8 @@ $('#edel').onclick=()=>{
 /* ---------- Spiel ---------- */
 let G=null;
 const WM='https://commons.wikimedia.org/wiki/Special:FilePath/';
-const dfl=iso=>{const b=(DEFL[iso.slice(3)]||'x').replace('.svg',''),b0=b.replace(/ \(.*\)$/,''),u=x=>WM+encodeURIComponent(x+'.svg')+'?width=320';return b==='Flag of Berlin'||b==='Flag of Hamburg'?[u(b)]:[u(b0+' (state)'),u(b0+' (with arms)'),u(b)]};
+const SUF=['(state)','(with arms)','(with coat of arms)','(Dienstflagge)','(service flag)','(state flag)'];
+const dfl=iso=>{const b=(DEFL[iso.slice(3)]||'x').replace('.svg',''),b0=b.replace(/ \(.*\)$/,''),u=x=>WM+encodeURIComponent(x+'.svg')+'?width=320';return b==='Flag of Berlin'||b==='Flag of Hamburg'?[u(b)]:[...SUF.map(x=>u(b0+' '+x)),u(b)]};
 const FS=iso=>iso.startsWith('de-')?dfl(iso):['https://cdn.jsdelivr.net/npm/flag-icons@7/flags/4x3/'+iso+'.svg','https://flagcdn.com/w320/'+iso+'.png'];
 const emo=iso=>String.fromCodePoint(...[...iso.toUpperCase()].map(c=>127397+c.charCodeAt(0)));
 const flag=(it,big)=>'<img'+(big?' class="big"':'')+' alt="" src="'+FS(it.iso)[0]+'" data-iso="'+it.iso+'" data-n="1" onerror="flagErr(this)">';
@@ -450,7 +500,7 @@ function flagErr(im){
 }
 function startGame(items,key,mode,only){
   const mo=MODES.find(m=>m.k===mode);
-  const pool=(only||items).filter(i=>(!mo.iso||i.iso)&&(!mo.cap||i.cap));
+  const pool=(only||items).filter(i=>(!mo.iso||i.iso)&&(!mo.cap||i.cap)&&(mo.k!=='to'||i.f));
   if(!pool.length)return;
   G={items,key,mo,q:shuffle(pool),set:new Set(items),diff:S.diff,marks:{},sm:S.map,only:!!only,i:0,ok:0,miss:[],tries:0,busy:false,w:key==='de'?'Bundesland':'Land'};
   show('quiz');
@@ -468,7 +518,7 @@ function next(f){
   const it=G.cur=G.q[G.i],k=G.mo.k;
   if(G.i>0&&k[0]==='c')G.map.ease();
   G.tries=0;G.busy=false;G.done=false;
-  G.map.sel.attr('class',d=>'c'+(d.ln?' ln':'')+(d.pt?' pt':'')+(d.d?' zn':'')+(G.set.has(d)?'':' dim')+(G.diff!=='h'&&G.marks[d.id]?' '+G.marks[d.id]:''));
+  G.map.sel.attr('class',function(d){return 'c'+(this.dataset.t?' '+this.dataset.t:'')+(d.ln?' ln':'')+(d.pt?' pt':'')+(d.d?' zn':'')+(G.set.has(d)?'':' dim')+(G.diff!=='h'&&G.marks[d.id]?' '+G.marks[d.id]:'')});
   $('#prompt').innerHTML=
     k==='cs'?'Finde: <b>'+esc(it.name)+'</b>':
     k==='ts'?'Wie heißt die markierte Stadt?':
@@ -638,7 +688,7 @@ async function load(){
     const bad=R.map((r,i)=>r.status==='rejected'?names[i]+' ('+(r.reason&&r.reason.message||r.reason)+')':'').filter(Boolean);
     if(R[0].status==='rejected'||R[1].status==='rejected')throw new Error(bad.join(', '));
     build(R[0].value,R[1].value,R[2].status==='fulfilled'?R[2].value:{features:[]});
-    $('#note').textContent=R[2].status==='rejected'?'Deutschlandkarte nicht geladen ('+(R[2].reason&&R[2].reason.message||'')+')':'';
+    $('#note').textContent=(R[2].status==='rejected'?'Deutschlandkarte nicht geladen ('+(R[2].reason&&R[2].reason.message||'')+'). ':'')+(byMap.mpn.length?'Nur als Punkt (fehlt in der Karte): '+byMap.mpn.join(', '):'');
     if(SY.tok)sync().catch(()=>{});
     renderHome();show('home');
   }catch(e){
