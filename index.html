@@ -58,6 +58,8 @@ svg .c.ln.ok{stroke:var(--ok)}svg .c.ln.bad{stroke:var(--bad)}svg .c.ln.warn{str
 .c.pt.ok{fill:var(--ok)}.c.pt.bad{fill:var(--bad)}.c.pt.warn{fill:var(--warn)}.c.pt.hint{fill:var(--hint)}
 .c.zn{stroke:var(--f,var(--land));stroke-width:.8px}
 .zb{fill:none;stroke:var(--ink);stroke-width:calc(var(--sw,1)*1.2px);pointer-events:none}svg.nb .zb{display:none}
+#statsTop{position:sticky;top:0;z-index:6;background:var(--bg);margin:0 -16px;padding:0 16px 6px}
+th{position:sticky;top:var(--sth,0);background:var(--bg);z-index:4}
 tr.mh td{text-align:left;font-weight:600;padding-top:14px}
 #score{font-size:34px;font-weight:700;margin:20px 0 4px;letter-spacing:-.02em}
 </style>
@@ -114,8 +116,8 @@ tr.mh td{text-align:left;font-weight:600;padding-top:14px}
 </section>
 
 <section id="stats" hidden>
-  <div class="bar"><button class="back">‹ Zurück</button></div><h1>Statistik</h1>
-  <div class="row" id="sgroups" style="margin:10px 0"></div><div id="stable"></div>
+  <div id="statsTop"><div class="bar"><button class="back">‹ Zurück</button></div><h1>Statistik</h1>
+  <div class="row" id="sgroups" style="margin:10px 0 4px"></div></div><div id="stable"></div>
 </section>
 
 <section id="sync" hidden>
@@ -145,22 +147,22 @@ REST=['https://cdn.jsdelivr.net/npm/world-countries@5/countries.json','https://r
 DE=['https://cdn.jsdelivr.net/gh/isellsoap/deutschlandGeoJSON@main/2_bundeslaender/3_mittel.geo.json','https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/3_mittel.geo.json','https://cdn.jsdelivr.net/gh/isellsoap/deutschlandGeoJSON@main/2_bundeslaender/4_niedrig.geo.json','https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/4_niedrig.geo.json'];
 const getJSON=async us=>{const er=[];for(const u of us){try{const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}catch(e){er.push(new URL(u).hostname+': '+e.message)}}throw new Error(er.join(' | '))};
 
-const MAPS={world:{n:'Welt (UN)',b:[[-169,-56],[180,83.5]],ng:1},worldx:{n:'Welt ohne Inselstaaten',b:[[-169,-56],[180,83.5]],ng:1},eu:{n:'Europa',b:[[-25,34],[45,71.5]]},as:{n:'Asien',b:[[25,-11.5],[146.5,56]]},af:{n:'Afrika',b:[[-26,-35],[58.5,37.5]]},na:{n:'Nordamerika',b:[[-170,6.5],[-52,74]]},sa:{n:'Südamerika',b:[[-82,-56],[-34.5,12.6]]},oc:{n:'Ozeanien',b:[[113,-47.5],[204,15]],rot:150},de:{n:'Deutschland',b:[[5.8,47.2],[15.2,55.1]]}};
+const MAPS={world:{n:'Welt (UN)',b:[[-170,-56],[189.9,83.5]],ng:1,rot:10},worldx:{n:'Welt ohne Inselstaaten',b:[[-170,-56],[189.9,83.5]],ng:1,rot:10},eu:{n:'Europa',b:[[-25,34],[45,71.5]]},as:{n:'Asien',b:[[25,-11.5],[146.5,56]]},af:{n:'Afrika',b:[[-26,-35],[58.5,37.5]]},na:{n:'Nordamerika',b:[[-170,6.5],[-52,74]]},sa:{n:'Südamerika',b:[[-82,-56],[-34.5,12.6]]},oc:{n:'Ozeanien',b:[[113,-47.5],[190,15]],rot:150},de:{n:'Deutschland',b:[[5.8,47.2],[15.2,55.1]]}};
 const MODES=[
- {k:'cn',t:'Name → anklicken',d:'Der Name wird gezeigt, du tippst auf die Karte.'},
- {k:'cf',t:'Flagge → anklicken',d:'Eine Flagge wird gezeigt, du suchst das Land.',iso:1},
- {k:'tn',t:'Markiert → Name tippen',d:'Ein Gebiet leuchtet auf, du schreibst den Namen.'},
- {k:'cc',t:'Hauptstadt → anklicken',d:'Die Hauptstadt wird gezeigt, du suchst das Land.',cap:1},
- {k:'tc',t:'Markiert → Hauptstadt tippen',d:'Ein Gebiet leuchtet auf, du schreibst die Hauptstadt.',cap:1},
- {k:'tf',t:'Flagge → Name tippen',d:'Eine Flagge wird gezeigt, du schreibst den Namen.',iso:1,nomap:1},
- {k:'to',t:'Umriss → Name tippen',d:'Nur die Außengrenze wird gezeigt.',nomap:1},
- {k:'df',t:'Name → Flagge malen',d:'Du malst die Flagge, danach siehst du die echte.',iso:1,nomap:1},
- {k:'cs',t:'Stadt → anklicken',d:'Eine Stadt wird genannt, du tippst auf den Punkt.',fixed:{de:'cde',worldx:'cw'}},
- {k:'ts',t:'Markierte Stadt → Name tippen',d:'Ein Punkt leuchtet auf, du schreibst die Stadt.',fixed:{de:'cde',worldx:'cw'}},
- {k:'ab',t:'Autobahn → anklicken',d:'A1 bis A9 auf der Karte finden (ungefährer Verlauf).',fixed:{de:'ab'}},
- {k:'tzp',t:'Postleitzahl-Region → Ziffer',d:'Ein Gebiet leuchtet auf, du schreibst die erste Ziffer der PLZ.',fixed:{de:'zp'}},
- {k:'tzv',t:'Vorwahl-Region → Ziffer',d:'Ein Gebiet leuchtet auf, du schreibst die erste Ziffer der Vorwahl (nach der 0).',fixed:{de:'zv'}},
- {k:'tza',t:'Autobahn-Region → Ziffer',d:'Ein Gebiet leuchtet auf, du schreibst die erste Ziffer der Autobahnnummern.',fixed:{de:'za'}}
+ {k:'cn',t:'Stecknadel',d:'Der Name wird gezeigt, du setzt die Stecknadel auf die Karte.'},
+ {k:'tn',t:'Eingeben',d:'Ein Gebiet leuchtet auf, du schreibst den Namen.'},
+ {k:'cf',t:'Stecknadel',d:'Eine Flagge wird gezeigt, du suchst das Land.',iso:1},
+ {k:'tf',t:'Eingeben',d:'Eine Flagge wird gezeigt, du schreibst den Namen.',iso:1,nomap:1},
+ {k:'df',t:'Malen',d:'Du malst die Flagge, danach siehst du die echte.',iso:1,nomap:1},
+ {k:'cc',t:'Stecknadel',d:'Die Hauptstadt wird gezeigt, du suchst das Land.',cap:1},
+ {k:'tc',t:'Eingeben',d:'Ein Gebiet leuchtet auf, du schreibst die Hauptstadt.',cap:1},
+ {k:'cs',t:'Stecknadel',d:'Eine Stadt wird genannt, du setzt die Stecknadel auf den Punkt.',fixed:{de:'cde',worldx:'cw'}},
+ {k:'ts',t:'Eingeben',d:'Ein Punkt leuchtet auf, du schreibst die Stadt.',fixed:{de:'cde',worldx:'cw'}},
+ {k:'to',t:'Eingeben',d:'Nur die Außengrenze wird gezeigt, du schreibst den Namen.',nomap:1},
+ {k:'ab',t:'Autobahn: Stecknadel',d:'A1 bis A9 auf der Karte finden (ungefährer Verlauf).',fixed:{de:'ab'}},
+ {k:'tzp',t:'Postleitzahl: Eingeben',d:'Ein Gebiet leuchtet auf, du schreibst die erste Ziffer der PLZ.',fixed:{de:'zp'}},
+ {k:'tzv',t:'Vorwahl: Eingeben',d:'Ein Gebiet leuchtet auf, du schreibst die erste Ziffer der Vorwahl (nach der 0).',fixed:{de:'zv'}},
+ {k:'tza',t:'Autobahn-Region: Eingeben',d:'Ein Gebiet leuchtet auf, du schreibst die erste Ziffer der Autobahnnummern.',fixed:{de:'za'}}
 ];
 const GR=['Länder','Flaggen','Hauptstädte','Städte','Umriss','Deutschland'],MG={ab:'Deutschland',tzp:'Deutschland',tzv:'Deutschland',tza:'Deutschland',cs:'Städte',ts:'Städte',cn:'Länder',tn:'Länder',cf:'Flaggen',tf:'Flaggen',df:'Flaggen',cc:'Hauptstädte',tc:'Hauptstädte',to:'Umriss'};
 MODES.forEach(m=>m.g=MG[m.k]);
@@ -175,36 +177,9 @@ const ABW={
 8:[[6.4,49.47],[6.75,49.35],[7.18,49.35],[7.37,49.25],[7.8,49.2],[8.35,49.0],[8.7,48.9],[9.15,48.75],[9.65,48.7],[9.95,48.4],[10.28,48.45],[10.9,48.37],[11.4,48.2],[11.7,48.1],[12.1,47.85],[12.65,47.82],[12.95,47.78]],
 9:[[13.1,52.35],[12.85,52.1],[12.65,51.85],[12.25,51.8],[12.1,51.55],[12.3,51.3],[11.95,51.0],[11.9,50.7],[11.9,50.3],[11.6,49.95],[11.55,49.75],[11.1,49.45],[11.4,48.9],[11.55,48.6],[11.6,48.2]]};
 const ABI=Object.entries(ABW).map(([n,c])=>({id:'ab'+n,name:'A '+n,alt:[],cap:null,capalt:[],iso:null,cc:'',ln:1,f:{type:'Feature',geometry:{type:Array.isArray(c[0][0])?'MultiLineString':'LineString',coordinates:c}}}));
-const sp=t=>t.split(';').map(x=>x.split(',').map(Number));
-const ZRAW={
-zp:{0:'13.74,51.05;12.37,51.34;12.92,50.83;14.33,51.76;11.97,51.48;12.08,50.88;14.99,51.15;12.14,50.5;12.24,51.83;14.42,51.18',
-1:'13.4,52.52;13.07,52.4;14.55,52.35;12.8,52.93;14.28,53.06;13.26,53.56;13.38,54.09;12.14,54.09;11.41,53.63;13.08,54.31;12.56,52.41;13.86,53.32;11.86,53.07',
-2:'9.99,53.55;10.14,54.32;10.69,53.87;9.44,54.78;8.8,53.08;8.21,53.14;10.41,53.25;8.7,53.87;7.2,53.37;8.1,53.53;9.05,54.48;11.46,53.9;11.15,52.85',
-3:'9.73,52.37;10.53,52.27;9.93,51.53;9.5,51.31;9.95,52.15;11.63,52.12;10.78,52.42;8.75,51.72;8.53,52.02;9.68,50.55;8.77,50.8;8.67,50.58;11.05,51.9;11.86,52.6;10.08,52.62;8.92,52.29',
-4:'7.47,51.51;7.01,51.46;6.76,51.43;6.77,51.23;7.63,51.96;6.59,51.34;7.15,51.26;8.05,52.28;6.44,51.2;6.62,51.84;7.32,52.52;6.62,51.65',
-5:'6.96,50.94;7.1,50.73;6.08,50.78;7.6,50.36;6.64,49.76;8.02,50.87;7.47,51.36;7.82,51.68;8.27,50.0;6.98,51.03;8.11,51.57',
-6:'8.68,50.11;8.24,50.08;8.65,49.87;8.47,49.49;8.69,49.4;7.0,49.23;7.77,49.44;8.92,50.13;8.36,49.63;8.06,50.39;9.15,49.97;7.6,49.2;7.87,49.85',
-7:'9.18,48.78;8.4,49.01;7.85,48.0;9.22,49.14;9.06,48.52;7.94,48.47;8.7,48.89;8.46,48.06;7.66,47.62;9.17,47.66;8.12,49.2',
-8:'11.58,48.14;10.9,48.37;12.12,47.86;9.99,48.4;10.31,47.73;11.42,48.76;11.1,47.5;10.18,47.98;12.15,48.54;9.61,47.78;9.79,48.1;10.15,48.68',
-9:'11.08,49.45;9.93,49.79;12.1,49.02;11.58,49.94;10.89,49.89;13.46,48.57;11.03,50.98;11.92,50.32;10.23,50.05;10.57,49.3;12.16,49.68;11.86,49.44;12.57,48.88;10.32,50.97;10.69,50.61;10.46,51.21'},
-zv:{2:'6.96,50.94;6.77,51.23;7.01,51.46;7.47,51.51;6.08,50.78;7.63,51.96;8.02,50.87;7.6,50.36;7.1,50.73;6.59,51.34;7.15,51.26;7.47,51.36;7.82,51.68;6.62,51.84;6.76,51.43;6.44,51.2;7.0,51.03',
-3:'13.4,52.52;13.07,52.4;14.33,51.76;11.63,52.12;11.97,51.48;12.37,51.34;13.74,51.05;12.92,50.83;11.03,50.98;11.59,50.93;12.14,54.09;11.41,53.63;13.26,53.56;13.08,54.31;14.55,52.35;12.08,50.88;14.99,51.15;10.32,50.97;11.86,52.6;12.24,51.83;11.46,53.9;10.69,50.61;10.79,51.5',
-4:'9.99,53.55;10.14,54.32;10.69,53.87;8.8,53.08;9.44,54.78;10.41,53.25;8.21,53.14;8.7,53.87;7.2,53.37;8.1,53.53;9.05,54.48;9.48,53.6;9.23,52.92',
-5:'9.73,52.37;10.53,52.27;9.93,51.53;8.05,52.28;8.53,52.02;9.5,51.31;8.75,51.72;10.78,52.42;10.08,52.62;9.95,52.15;7.29,52.7;7.07,52.43;8.92,52.29;9.84,52.99;10.43,51.9;9.36,52.1;7.32,52.52;7.44,52.28;9.38,51.77',
-6:'8.68,50.11;8.27,50.0;8.24,50.08;8.65,49.87;8.47,49.49;8.69,49.4;7.0,49.23;7.77,49.44;6.64,49.76;8.67,50.58;9.68,50.55;8.77,50.8;9.15,49.97;8.06,50.39;8.36,49.63;7.87,49.85;7.6,49.2;8.92,50.13;9.7,50.87',
-7:'9.18,48.78;8.4,49.01;7.85,48.0;9.22,49.14;9.06,48.52;7.94,48.47;8.7,48.89;8.46,48.06;7.66,47.62;9.17,47.66;9.99,48.4;10.15,48.68;9.61,47.78;9.79,48.1;9.48,47.65;9.7,49.1',
-8:'11.58,48.14;10.9,48.37;12.12,47.86;11.42,48.76;10.31,47.73;12.15,48.54;13.46,48.57;11.1,47.5;10.18,47.98;12.83,48.17;11.75,48.4;10.28,48.45',
-9:'11.08,49.45;9.93,49.79;12.1,49.02;11.58,49.94;10.89,49.89;11.92,50.32;10.23,50.05;10.57,49.3;12.16,49.68;11.86,49.44;12.57,48.88;12.96,48.84;10.96,50.26;11.5,49.2'},
-za:{1:'13.4,52.52;13.07,52.4;14.33,51.76;14.55,52.35;13.74,51.05;12.14,54.09;13.26,53.56;11.63,52.12;12.37,51.34;11.97,51.48;11.41,53.63;12.24,51.83;12.56,52.41',
-2:'9.99,53.55;10.14,54.32;10.69,53.87;9.44,54.78;8.8,53.08;8.21,53.14;10.41,53.25;8.7,53.87;7.2,53.37;11.46,53.9;13.38,54.09;13.08,54.31;9.05,54.48;8.1,53.53',
-3:'9.73,52.37;10.53,52.27;9.93,51.53;8.05,52.28;8.53,52.02;8.75,51.72;10.78,52.42;10.08,52.62;9.95,52.15;11.05,51.9;10.79,51.5;7.32,52.52;7.63,51.96;8.92,52.29;11.86,52.6',
-4:'7.47,51.51;7.01,51.46;6.76,51.43;6.77,51.23;6.08,50.78;7.15,51.26;9.5,51.31;8.02,50.87;7.47,51.36;6.44,51.2;6.62,51.84;8.67,50.58;8.77,50.8;9.68,50.55',
-5:'6.96,50.94;7.1,50.73;6.59,51.34;6.69,51.2;6.98,51.03;6.5,50.8;7.2,50.9',
-6:'8.68,50.11;8.27,50.0;8.24,50.08;8.65,49.87;8.47,49.49;8.69,49.4;7.0,49.23;7.77,49.44;6.64,49.76;7.6,50.36;9.15,49.97;8.36,49.63;7.87,49.85;8.92,50.13;8.06,50.39',
-7:'11.03,50.98;10.69,50.61;10.23,50.05;11.58,49.94;11.92,50.32;12.92,50.83;12.14,50.5;10.89,49.89;10.96,50.26;10.32,50.97;12.08,50.88;11.59,50.93',
-8:'9.18,48.78;8.4,49.01;7.85,48.0;9.22,49.14;9.06,48.52;7.94,48.47;8.7,48.89;8.46,48.06;7.66,47.62;9.17,47.66;9.99,48.4;9.93,49.79;10.15,48.68;9.61,47.78;9.79,48.1;9.7,49.1',
-9:'11.58,48.14;10.9,48.37;12.12,47.86;11.42,48.76;10.31,47.73;12.15,48.54;13.46,48.57;11.1,47.5;10.18,47.98;11.08,49.45;12.1,49.02;12.16,49.68;11.86,49.44;12.57,48.88;10.57,49.3;11.5,49.2'}};
-const ZS={};Object.entries(ZRAW).forEach(([k,o])=>{ZS[k]={};Object.entries(o).forEach(([d,t])=>ZS[k][d]=sp(t))});
+const ZT='13.74,51.05,031;12.37,51.34,031;12.92,50.83,037;14.33,51.76,031;11.97,51.48,031;12.08,50.88,037;14.99,51.15,031;12.14,50.5,037;12.24,51.83,031;14.42,51.18,03-;12.5,50.72,037;11.59,50.93,037;11.37,50.65,03-;12.44,50.99,03-;11.8,51.15,03-;11.55,51.53,03-;12.32,51.62,03-;12.65,51.87,03-;11.97,51.75,03-;13.0,51.56,03-;14.23,51.43,03-;13.7,51.63,03-;14.37,51.57,03-;11.15,51.79,03-;11.3,51.47,03-;12.2,50.65,03-;11.34,50.72,03-;12.14,51.05,03-;13.47,51.16,03-;13.93,50.96,03-;13.4,52.52,131;13.07,52.4,131;14.55,52.35,131;12.8,52.93,13-;14.28,53.06,13-;13.26,53.56,131;13.38,54.09,132;13.08,54.31,132;12.14,54.09,131;11.41,53.63,131;12.56,52.41,13-;13.86,53.32,13-;11.86,53.07,13-;11.5,53.33,13-;11.85,53.43,13-;11.19,53.43,13-;13.08,51.99,13-;13.17,52.08,13-;12.6,52.14,13-;14.65,52.15,13-;12.18,53.8,13-;12.67,53.52,13-;13.99,53.5,13-;13.8,52.83,13-;12.49,53.16,13-;12.34,52.6,13-;11.63,52.12,331;11.46,53.9,232;11.11,53.89,23-;11.19,53.86,23-;11.86,52.6,33-;11.05,51.9,333;11.15,52.85,23-;11.85,52.27,33-;12.08,51.97,33-;11.03,50.98,937;10.32,50.97,937;10.7,50.95,93-;10.46,51.21,93-;10.79,51.5,933;10.69,50.61,937;10.42,50.57,93-;10.73,50.43,93-;10.95,50.84,93-;11.1,51.16,93-;11.33,50.98,93-;11.52,51.02,93-;10.9,50.68,93-;10.15,51.38,333;10.87,51.37,93-;9.99,53.55,442;10.14,54.32,442;10.69,53.87,442;9.44,54.78,442;8.8,53.08,442;8.21,53.14,442;10.41,53.25,442;8.7,53.87,442;7.2,53.37,243;8.1,53.53,242;9.05,54.48,242;10.08,52.62,253;10.56,52.97,25-;9.84,52.99,25-;9.6,52.86,25-;9.41,53.11,24-;9.23,52.92,24-;9.48,53.6,242;7.45,53.23,24-;7.4,53.08,24-;8.58,53.55,242;9.1,54.2,24-;9.5,53.92,24-;9.98,54.07,24-;10.76,53.7,24-;8.83,52.91,24-;8.8,52.68,24-;8.3,54.9,24-;10.62,54.14,24-;10.55,53.37,24-;11.14,52.97,25-;10.69,53.63,24-;9.73,52.37,353;10.53,52.27,353;9.93,51.53,353;9.5,51.31,354;9.95,52.15,353;10.78,52.42,353;8.75,51.72,353;8.53,52.02,353;8.92,52.29,353;8.88,51.94,35-;8.38,51.9,35-;9.36,52.1,35-;9.2,52.64,35-;10.55,52.48,35-;9.14,51.49,35-;8.87,51.27,35-;10.43,51.9,35-;10.35,52.15,353;8.67,52.12,35-;8.9,52.03,35-;9.38,51.77,35-;10.05,51.19,35-;8.37,52.6,453;8.05,52.28,453;7.32,52.52,453;7.07,52.43,45-;7.29,52.69,45-;7.44,52.28,45-;8.28,52.73,44-;8.05,52.85,44-;7.72,52.28,45-;9.68,50.55,366;8.77,50.8,364;8.67,50.58,364;8.5,50.55,36-;9.7,50.87,36-;9.53,50.35,36-;8.8,51.06,36-;9.2,50.92,36-;8.68,50.11,666;8.24,50.08,666;8.65,49.87,666;8.92,50.13,666;8.06,50.39,66-;9.15,49.97,666;8.62,50.23,66-;8.75,50.33,66-;8.77,50.1,66-;9.19,50.2,66-;9.11,50.29,66-;9.26,49.7,96-;8.62,49.68,66-;8.41,49.99,66-;8.27,50.22,66-;8.27,50.0,566;7.87,49.85,566;7.9,49.97,56-;8.12,49.75,56-;8.36,49.63,666;8.47,49.49,666;8.44,49.48,66-;8.69,49.4,666;8.65,49.3,66-;8.43,49.32,66-;8.14,49.35,66-;8.17,49.46,66-;7.77,49.44,666;7.6,49.2,666;7.37,49.25,66-;7.18,49.35,66-;7.0,49.23,666;6.64,49.44,66-;6.75,49.31,66-;7.4,49.54,66-;7.6,49.65,66-;9.15,49.35,76-;9.32,49.52,76-;8.12,49.2,76-;6.64,49.76,564;6.52,49.97,56-;6.9,49.99,56-;7.31,49.71,56-;7.6,50.36,524;7.47,50.43,52-;7.82,50.43,52-;7.65,50.69,52-;7.22,50.33,52-;7.17,50.15,52-;7.82,50.66,52-;7.87,50.79,52-;8.02,50.87,524;6.96,50.94,525;7.1,50.73,525;6.08,50.78,525;6.98,51.03,525;6.49,50.8,52-;6.79,50.66,52-;7.13,50.99,52-;6.36,50.92,52-;6.1,51.06,52-;6.77,51.23,425;6.59,51.34,425;6.69,51.2,425;6.44,51.2,425;6.39,51.26,42-;7.15,51.26,424;7.08,51.17,42-;7.19,51.18,42-;7.01,51.46,424;6.76,51.43,424;7.47,51.51,424;7.22,51.48,424;7.1,51.52,42-;6.85,51.47,42-;6.93,51.52,42-;7.2,51.61,42-;6.63,51.45,42-;6.62,51.65,42-;6.62,51.84,42-;7.63,51.96,424;7.53,51.62,42-;7.17,51.94,42-;7.01,52.08,42-;8.0,51.95,42-;7.03,52.21,42-;6.14,51.79,42-;7.47,51.36,524;7.82,51.68,52-;8.11,51.57,52-;7.7,51.37,52-;8.35,51.67,52-;7.85,51.03,52-;7.57,51.03,52-;7.63,51.22,52-;8.06,51.4,52-;8.57,51.4,52-;8.28,51.35,52-;9.18,48.78,778;8.4,49.01,778;7.85,48.0,778;9.22,49.14,778;9.06,48.52,778;7.94,48.47,778;8.7,48.89,778;8.46,48.06,778;7.66,47.62,77-;9.17,47.66,778;8.88,49.25,77-;8.6,49.12,77-;8.27,49.05,77-;9.74,49.11,77-;10.07,49.14,77-;10.1,48.84,77-;9.65,48.7,77-;9.2,48.09,77-;8.82,47.98,77-;9.2,48.49,77-;8.24,48.76,77-;7.87,48.34,77-;8.2,47.62,77-;8.84,47.76,77-;8.74,48.71,77-;9.77,49.49,97-;9.69,49.28,77-;8.36,49.22,77-;9.99,48.4,878;10.15,48.68,87-;9.79,48.1,87-;9.73,48.28,87-;9.61,47.78,87-;9.48,47.65,87-;9.17,47.77,87-;10.0,48.39,87-;9.93,49.79,938;11.58,48.14,889;10.9,48.37,889;12.12,47.86,889;11.42,48.76,889;10.31,47.73,889;12.15,48.54,889;11.1,47.5,889;10.18,47.98,889;13.46,48.57,989;12.83,48.17,88-;11.74,48.4,88-;11.5,48.53,88-;11.18,48.73,88-;11.19,48.89,88-;12.5,48.63,88-;12.64,47.87,88-;10.88,48.05,88-;10.7,47.57,88-;10.28,48.45,88-;10.48,48.05,88-;9.68,47.55,88-;12.76,48.4,88-;12.52,48.25,88-;11.43,48.26,88-;10.49,48.85,89-;10.78,48.72,89-;10.49,48.57,89-;11.08,49.45,997;11.58,49.94,997;10.89,49.89,997;11.92,50.32,997;10.23,50.05,997;10.96,50.26,997;12.1,49.02,999;12.16,49.68,999;11.86,49.44,999;12.57,48.88,999;12.96,48.84,999;10.57,49.3,99-;11.46,49.28,99-;11.87,48.91,99-;10.18,49.38,99-;10.32,49.07,99-;10.76,49.12,99-;10.97,49.03,99-;9.5,49.76,99-;10.08,50.2,99-;11.45,50.1,99-;12.66,49.22,99-;12.1,49.33,99-;11.0,49.6,99-;11.06,49.72,99-;12.08,50.0,99-;9.66,49.62,99-';
+const ZS={zp:{},zv:{},za:{}};
+ZT.split(';').forEach(t=>{const[a,b,c]=t.split(',');['zp','zv','za'].forEach((k,i)=>{const d=c[i];if(d!=='-')(ZS[k][d]=ZS[k][d]||[]).push([+a,+b])})});
 const CITY=(t,alt)=>t.split(';').map((x,i)=>{const[n,a,b]=x.split(',');return{id:'c'+n,name:n,alt:alt[n]?[alt[n]]:[],cap:null,capalt:[],iso:null,cc:'',pt:[+a,+b]}});
 const CDE='Berlin,13.405,52.52;Hamburg,9.993,53.551;München,11.582,48.135;Köln,6.96,50.938;Frankfurt am Main,8.682,50.11;Stuttgart,9.18,48.775;Düsseldorf,6.773,51.228;Leipzig,12.373,51.34;Dortmund,7.466,51.514;Essen,7.013,51.456;Bremen,8.802,53.079;Dresden,13.738,51.05;Hannover,9.732,52.375;Nürnberg,11.077,49.452;Duisburg,6.763,51.435;Bochum,7.216,51.482;Wuppertal,7.15,51.256;Bielefeld,8.532,52.021;Bonn,7.1,50.734;Münster,7.626,51.961;Karlsruhe,8.404,49.007;Mannheim,8.466,49.489;Augsburg,10.898,48.37;Wiesbaden,8.24,50.082;Mönchengladbach,6.442,51.195;Gelsenkirchen,7.1,51.517;Aachen,6.083,50.776;Braunschweig,10.527,52.269;Kiel,10.135,54.323;Chemnitz,12.92,50.833';
 const CWT='New York,-74.0,40.71;Los Angeles,-118.24,34.05;Chicago,-87.63,41.88;Toronto,-79.38,43.65;Mexiko-Stadt,-99.13,19.43;Bogotá,-74.07,4.71;Lima,-77.04,-12.05;Santiago de Chile,-70.65,-33.45;Buenos Aires,-58.38,-34.6;São Paulo,-46.63,-23.55;Rio de Janeiro,-43.17,-22.91;London,-0.13,51.51;Paris,2.35,48.86;Madrid,-3.7,40.42;Rom,12.5,41.9;Istanbul,28.98,41.01;Moskau,37.62,55.75;Kairo,31.24,30.04;Lagos,3.38,6.52;Nairobi,36.82,-1.29;Kinshasa,15.27,-4.32;Johannesburg,28.05,-26.2;Kapstadt,18.42,-33.92;Dubai,55.27,25.2;Teheran,51.39,35.69;Mumbai,72.88,19.08;Delhi,77.2,28.61;Karatschi,67.0,24.86;Dhaka,90.41,23.81;Bangkok,100.5,13.75;Jakarta,106.85,-6.21;Hongkong,114.17,22.32;Schanghai,121.47,31.23;Peking,116.4,39.9;Seoul,126.98,37.57;Tokio,139.69,35.69;Sydney,151.21,-33.87;Berlin,13.4,52.52';
@@ -259,6 +234,12 @@ function build(topo,countries,de){
   }
   let feats=topojson.feature(topo,topo.objects.countries).features.filter(f=>f.properties.name!=='Antarctica');
   if(uaM)feats=feats.map(f=>String(f.id)==='804'?Object.assign({},f,{geometry:fixW({type:'Feature',geometry:uaM}).geometry}):f);
+  const trimF=(f,fn)=>{
+    if(!f||f.geometry.type!=='MultiPolygon')return f;
+    const keep=f.geometry.coordinates.filter(pl=>!fn(d3.geoCentroid({type:'Polygon',coordinates:pl})));
+    return keep.length===f.geometry.coordinates.length?f:Object.assign({},f,{geometry:{type:'MultiPolygon',coordinates:keep}});
+  };
+  feats=feats.map(f=>{const id=String(f.id);return id==='840'?trimF(f,c=>c[0]<-150&&c[1]<30):id==='296'?trimF(f,c=>c[0]<-100):f});
   if(cy&&nc){
     const mg=topojson.merge(topo,[cy,nc]);
     feats=feats.filter(f=>f.properties.name!=='N. Cyprus').map(f=>String(f.id)==='196'?{type:'Feature',id:f.id,properties:f.properties,geometry:mg}:f);
@@ -303,16 +284,25 @@ function fitBox(it){
 const BASE={ab:'de',cde:'de',cw:'worldx',zp:'de',zv:'de',za:'de'};
 function mkMap(svg,key,fs,fit){
   const items=byMap[key],bk=BASE[key]||key,mw=Math.round($('main').clientWidth);
-  let[W,H]=fs?[mw,Math.round(Math.min(Math.max(260,innerHeight-fs),mw*1.6))]:bk==='de'?[560,720]:[800,520];
+  let[W,H]=fs?[mw,Math.round(Math.min(Math.max(260,innerHeight-fs),mw*2))]:bk==='de'?[560,720]:[800,520];
   const m=MAPS[bk]||{},pr=bk==='de'?d3.geoMercator():d3.geoNaturalEarth1();
-  if(m.rot)pr.rotate([-m.rot,0]);
+  if(m.rot&&!fit)pr.rotate([-m.rot,0]);
   const BP=fit?pts(fitBox(fit)):m.b?pts(m.ng?m.b:grow(m.b,m.rot?400:180)):null;
+  let ext=null;
   if(BP){
     const mp={type:'MultiPoint',coordinates:BP};
-    pr.fitSize([W,H],mp);
-    const bb=d3.geoPath(pr).bounds(mp);
-    H=Math.round(Math.min(H,bb[1][1]-bb[0][1]+12));
-    pr.fitSize([W,H],mp);
+    if(fs){
+      pr.fitHeight(H,mp);
+      const b0=d3.geoPath(pr).bounds(mp),t0=pr.translate();
+      pr.translate([t0[0]+W/2-(b0[0][0]+b0[1][0])/2,t0[1]]);
+      const b1=d3.geoPath(pr).bounds(mp);
+      ext=[[Math.min(0,b1[0][0]),0],[Math.max(W,b1[1][0]),H]];
+    }else{
+      pr.fitSize([W,H],mp);
+      const bb=d3.geoPath(pr).bounds(mp);
+      H=Math.round(Math.min(H,bb[1][1]-bb[0][1]+12));
+      pr.fitSize([W,H],mp);
+    }
   }else pr.fitSize([W,H],{type:'Sphere'});
   const path=d3.geoPath(pr),root=d3.select(svg);
   root.selectAll('*').remove();
@@ -341,29 +331,31 @@ function mkMap(svg,key,fs,fit){
     });
     bd=[...ed.values()].filter(v=>v.length===2&&v[0][0]!==v[1][0]).map(v=>'M'+fx(v[0][1])+'L'+fx(v[0][2])).join('');
   }
-  const hl=items.filter(i=>i.f&&HL.has(i.cc)&&i.f.geometry.type==='MultiPolygon'&&i.f.geometry.coordinates.length>1).map(i=>{
+  const hl0=items.filter(i=>i.f&&HL.has(i.cc)&&i.f.geometry.type==='MultiPolygon'&&i.f.geometry.coordinates.length>1).map(i=>{
     const q=[];i.f.geometry.coordinates.forEach(pl=>pl[0].forEach(c=>{const z=pr(c);if(z)q.push(z)}));
     const h=d3.polygonHull(q);if(!h)return null;
     const cx=d3.mean(h,z=>z[0]),cy=d3.mean(h,z=>z[1]);
-    const hp=h.map(z=>{const dx=z[0]-cx,dy=z[1]-cy,l=Math.hypot(dx,dy)||1;return[z[0]+dx/l*4,z[1]+dy/l*4]});
+    const hp=h.map(z=>{const dx=z[0]-cx,dy=z[1]-cy,l=Math.hypot(dx,dy)||1;return[z[0]+dx/l*1.5,z[1]+dy/l*1.5]});
     const xs=hp.map(z=>z[0]),ys=hp.map(z=>z[1]);
-    return{it:i,d:'M'+hp.map(z=>z[0].toFixed(1)+','+z[1].toFixed(1)).join('L')+'Z',sz:Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))};
-  }).filter(h=>h&&h.sz<80);
+    return{bx:[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)],it:i,d:'M'+hp.map(z=>z[0].toFixed(1)+','+z[1].toFixed(1)).join('L')+'Z',sz:Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))};
+  }).filter(h=>h&&h.sz<80).sort((a,b)=>a.sz-b.sz);
+  const hl=[];hl0.forEach(h=>{if(!hl.some(o=>h.bx[0]<o.bx[2]&&h.bx[2]>o.bx[0]&&h.bx[1]<o.bx[3]&&h.bx[3]>o.bx[1]))hl.push(h)});
   const hsel=g.append('g').selectAll('path').data(hl).join('path').attr('d',d=>d.d).attr('class','hl');
   const lay=g.append('g'),pI=items.filter(i=>!i.pt);
   lay.selectAll('path').data(pI).join('path').attr('d',d=>d.d||path(d.f)).attr('class',d=>'c'+(d.ln?' ln':'')+(d.d?' zn':'')).attr('clip-path',d=>d.d?'url(#dec)':null);
-  const szm=new Map(),sm=pI.filter(i=>{if(i.ln||i.d)return false;const[[x0,y0],[x1,y1]]=path.bounds(i.f),z=Math.max(x1-x0,y1-y0);szm.set(i,z);return z<22});
+  const szm=new Map(),sm=pI.filter(i=>{if(i.ln||i.d)return false;const[[x0,y0],[x1,y1]]=path.bounds(i.f),z=Math.max(x1-x0,y1-y0);szm.set(i,z);return z<6});
   const circ=lay.selectAll('circle.sm').data(sm).join('circle').attr('cx',d=>path.centroid(d.f)[0]).attr('cy',d=>path.centroid(d.f)[1]).attr('r',3).attr('class','c sm');
   const ptc=lay.selectAll('circle.pt').data(items.filter(i=>i.pt)).join('circle').attr('cx',d=>pr(d.pt)[0]).attr('cy',d=>pr(d.pt)[1]).attr('r',5).attr('class','c pt');
   const sel=lay.selectAll('.c');
   if(bd)g.append('g').attr('clip-path','url(#dec)').append('path').attr('d',bd).attr('class','zb');
-  const zoom=d3.zoom().scaleExtent([1,40]).extent([[0,0],[W,H]]).translateExtent([[0,0],[W,H]]).on('zoom',e=>{
+  const zoom=d3.zoom().scaleExtent([1,40]).extent([[0,0],[W,H]]).translateExtent(ext||[[0,0],[W,H]]).on('zoom',e=>{
     const k=e.transform.k;g.attr('transform',e.transform);g.style('--sw',1/k).style('--lw',3.5/Math.sqrt(k));
-    circ.attr('r',(3+3*Math.min(1,(k-1)/3))/k).attr('display',d=>k>=1.8&&szm.get(d)*k<40?null:'none');
+    circ.attr('r',(4+2*Math.min(1,(k-4)/4))/k).attr('display',d=>k>=4&&szm.get(d)*k<14?null:'none');
     ptc.attr('r',5/k);
   });
   root.call(zoom).call(zoom.transform,d3.zoomIdentity);
   return{sel,hsel,
+    ease(){const k=d3.zoomTransform(svg).k;if(k>1.05)root.transition().duration(350).call(zoom.scaleTo,1+(k-1)*.5)},
     reset(){root.transition().duration(300).call(zoom.transform,d3.zoomIdentity)},
     zoomTo(d){
       let cx,cy,k;
@@ -446,7 +438,9 @@ $('#edel').onclick=()=>{
 
 /* ---------- Spiel ---------- */
 let G=null;
-const FS=iso=>iso.startsWith('de-')?['https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(DEFL[iso.slice(3)]||'x')+'?width=320']:['https://cdn.jsdelivr.net/npm/flag-icons@7/flags/4x3/'+iso+'.svg','https://flagcdn.com/w320/'+iso+'.png'];
+const WM='https://commons.wikimedia.org/wiki/Special:FilePath/';
+const dfl=iso=>{const b=(DEFL[iso.slice(3)]||'x').replace('.svg',''),b0=b.replace(/ \(.*\)$/,''),u=x=>WM+encodeURIComponent(x+'.svg')+'?width=320';return b==='Flag of Berlin'||b==='Flag of Hamburg'?[u(b)]:[u(b0+' (state)'),u(b0+' (with arms)'),u(b)]};
+const FS=iso=>iso.startsWith('de-')?dfl(iso):['https://cdn.jsdelivr.net/npm/flag-icons@7/flags/4x3/'+iso+'.svg','https://flagcdn.com/w320/'+iso+'.png'];
 const emo=iso=>String.fromCodePoint(...[...iso.toUpperCase()].map(c=>127397+c.charCodeAt(0)));
 const flag=(it,big)=>'<img'+(big?' class="big"':'')+' alt="" src="'+FS(it.iso)[0]+'" data-iso="'+it.iso+'" data-n="1" onerror="flagErr(this)">';
 function flagErr(im){
@@ -463,7 +457,7 @@ function startGame(items,key,mode,only){
   vis($('#qsvg'),!mo.nomap);
   $('#tf').hidden=!mo.k.startsWith('t');
   vis($('#osvg'),mo.k==='to');$('#draw').hidden=mo.k!=='df';
-  G.map=mkMap($('#qsvg'),key,mo.k[0]==='t'?340:240,items!==byMap[key]?items:null);
+  G.map=mkMap($('#qsvg'),key,mo.k[0]==='t'?330:190,items!==byMap[key]?items:null);
   d3.select('#qsvg').classed('nb',G.diff==='b'&&!['ab','cs','ts'].includes(mo.k));
   G.map.sel.on('click',(e,d)=>pick(d));G.map.hsel.on('click',(e,d)=>pick(d.it));
   next();
@@ -472,6 +466,7 @@ function prog(){$('#prog').textContent=Math.min(G.i+1,G.q.length)+' / '+G.q.leng
 function next(f){
   if(G.i>=G.q.length)return finish();
   const it=G.cur=G.q[G.i],k=G.mo.k;
+  if(G.i>0&&k[0]==='c')G.map.ease();
   G.tries=0;G.busy=false;G.done=false;
   G.map.sel.attr('class',d=>'c'+(d.ln?' ln':'')+(d.pt?' pt':'')+(d.d?' zn':'')+(G.set.has(d)?'':' dim')+(G.diff!=='h'&&G.marks[d.id]?' '+G.marks[d.id]:''));
   $('#prompt').innerHTML=
@@ -492,7 +487,7 @@ function next(f){
   if(k==='to')outline(it);
   if(k==='df')initDraw();
   if(k[0]==='t'){
-    $('#ans').value='';$('#ans').readOnly=false;$('#fb').textContent='';$('#fb').className='';$('#go').textContent='Prüfen';
+    $('#ans').value='';$('#ans').readOnly=false;$('#ans').setAttribute('inputmode',k.startsWith('tz')?'numeric':'text');$('#fb').textContent='';$('#fb').className='';$('#go').textContent='Prüfen';
     if(!G.mo.nomap){G.map.sel.filter(d=>d===it).classed('hint',true);G.map.zoomTo(it)}
     if(f===true)$('#ans').focus();
   }
@@ -593,15 +588,16 @@ function renderStats(){
   const p=x=>Math.round(100*x.ok/x.n),DN={n:'Normal',h:'Hard',b:'Ohne Grenzen'};
   const rows=MODES.map(m=>{
     const hm=H.filter(x=>x.map===ST&&x.mode===m.k);if(!hm.length)return'';
-    return'<tr class="mh"><td colspan="5">'+m.t+'</td></tr>'+['n','h','b'].map(d=>{
+    return'<tr class="mh"><td colspan="5">'+(m.g==='Deutschland'?m.t:m.g+' – '+m.t)+'</td></tr>'+['n','h','b'].map(d=>{
       const h=hm.filter(x=>(x.diff||'n')===d);if(!h.length)return'';
       const l=h.slice().sort((a,b)=>a.t-b.t);
       return'<tr><td>'+DN[d]+'</td><td>'+h.length+'</td><td>'+p(l[l.length-1])+' %</td><td>'+Math.max(...h.map(p))+' %</td><td>'+Math.round(h.reduce((s,x)=>s+p(x),0)/h.length)+' %</td></tr>';
     }).join('');
   }).join('');
   $('#stable').innerHTML='<table><tr><th>Stufe</th><th>Läufe</th><th>Zuletzt</th><th>Best</th><th>Ø</th></tr>'+rows+'</table>';
+  $('#stable').style.setProperty('--sth',$('#statsTop').offsetHeight+'px');
 }
-$('#gostats').onclick=()=>{renderStats();show('stats')};
+$('#gostats').onclick=()=>{show('stats');renderStats()};
 document.querySelectorAll('.back').forEach(b=>b.onclick=()=>{renderHome();show('home')});
 
 /* ---------- Sync über privaten GitHub-Gist ---------- */
