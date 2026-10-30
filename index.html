@@ -11,8 +11,8 @@
 <meta name="color-scheme" content="light dark">
 <title>Kartenquiz</title>
 <style>
-:root{--bg:#f1f5f4;--card:#fff;--ink:#13293d;--mut:#5b7083;--line:#d3dde4;--sea:#9cc5de;--land:#fbfbf8;--edge:#7f9bb0;--dim:#d8e0dc;--acc:#0e6ba8;--ok:#2f9e63;--bad:#d64550;--hint:#f29e4c;--warn:#f6d743;--dot:#ffe58a}
-@media(prefers-color-scheme:dark){:root{--bg:#0e1a24;--card:#16283a;--ink:#e6eef4;--mut:#8aa0b2;--line:#27405a;--sea:#0a2540;--land:#3a5f7a;--dot:#e3c86a;--edge:#5a7a92;--dim:#1a2f3f;--acc:#4fa8e0}}
+:root{--bg:#f1f5f4;--card:#fff;--ink:#13293d;--mut:#5b7083;--line:#d3dde4;--sea:#9cc5de;--land:#fbfbf8;--edge:#7f9bb0;--dim:#d8e0dc;--acc:#0e6ba8;--ok:#2f9e63;--bad:#d64550;--hint:#f29e4c;--warn:#f6d743;--dot:#d5e0ea}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1a24;--card:#16283a;--ink:#e6eef4;--mut:#8aa0b2;--line:#27405a;--sea:#0a2540;--land:#3a5f7a;--dot:#8fb3cf;--edge:#5a7a92;--dim:#1a2f3f;--acc:#4fa8e0}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
@@ -67,6 +67,7 @@ th{position:sticky;top:calc(var(--sth,0px) - 2px);background:var(--bg);z-index:4
 tr.mh td{text-align:left;font-weight:600;padding-top:14px}
 svg .c.dot{fill:var(--dot);stroke:var(--ink);stroke-width:1px;vector-effect:non-scaling-stroke;pointer-events:all}
 svg .c.dot.ok{fill:var(--ok)}svg .c.dot.bad{fill:var(--bad)}svg .c.dot.warn{fill:var(--warn)}svg .c.dot.hint{fill:var(--hint)}
+.gob{display:none;fill:none;stroke:var(--ink);stroke-width:calc(var(--sw,1)*1.4px);pointer-events:none}svg.nb .gob{display:block}
 #score{font-size:34px;font-weight:700;margin:20px 0 4px;letter-spacing:-.02em}
 </style>
 </head>
@@ -153,7 +154,7 @@ REST=['https://cdn.jsdelivr.net/npm/world-countries@5/countries.json','https://r
 DE=['https://cdn.jsdelivr.net/gh/isellsoap/deutschlandGeoJSON@main/2_bundeslaender/3_mittel.geo.json','https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/3_mittel.geo.json','https://cdn.jsdelivr.net/gh/isellsoap/deutschlandGeoJSON@main/2_bundeslaender/4_niedrig.geo.json','https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/4_niedrig.geo.json'];
 const getJSON=async us=>{const er=[];for(const u of us){try{const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}catch(e){er.push(new URL(u).hostname+': '+e.message)}}throw new Error(er.join(' | '))};
 
-const MAPS={world:{n:'Welt (UN)',b:[[-168.8,-56],[189.9,83.5]],ng:1,rot:10,wrap:1},worldx:{n:'Welt ohne Inselstaaten',b:[[-168.8,-56],[189.9,83.5]],ng:1,rot:10,wrap:1},eu:{n:'Europa',b:[[-25,34],[45,71.5]]},as:{n:'Asien',b:[[25,-11.5],[146.5,56]]},af:{n:'Afrika',b:[[-26,-35],[58.5,37.5]]},na:{n:'Nordamerika',b:[[-170,6.5],[-52,74]]},sa:{n:'Südamerika',b:[[-82,-56],[-34.5,12.6]]},oc:{n:'Ozeanien',b:[[113,-47.5],[190,15]],rot:150},de:{n:'Deutschland',b:[[5.8,47.2],[15.2,55.1]]}};
+const MAPS={world:{n:'Welt (UN)',b:[[-168.8,-56],[189.9,83.5]],ng:1,rot:10,wrap:1},worldx:{n:'Welt ohne Inselstaaten',b:[[-168.8,-56],[189.9,83.5]],ng:1,rot:10,wrap:1},wall:{n:'Welt (alle Gebiete)',b:[[-168.8,-56],[189.9,83.5]],ng:1,rot:10,wrap:1,ed:1},eu:{n:'Europa',b:[[-25,34],[45,71.5]]},as:{n:'Asien',b:[[25,-11.5],[146.5,56]]},af:{n:'Afrika',b:[[-26,-35],[58.5,37.5]]},na:{n:'Nordamerika',b:[[-170,6.5],[-52,74]]},sa:{n:'Südamerika',b:[[-82,-56],[-34.5,12.6]]},oc:{n:'Ozeanien',b:[[113,-47.5],[190,15]],rot:150},de:{n:'Deutschland',b:[[5.8,47.2],[15.2,55.1]]}};
 const MODES=[
  {k:'cn',t:'Stecknadel',d:'Der Name wird gezeigt, du setzt die Stecknadel auf die Karte.'},
  {k:'tn',t:'Eingeben',d:'Ein Gebiet leuchtet auf, du schreibst den Namen.'},
@@ -278,6 +279,7 @@ function build(topo,countries,de){
     all.push({id:'w'+(c.ccn3||cca),name:(c.translations&&c.translations.deu&&c.translations.deu.common)||c.name.common,alt:[c.name.common],cap:cap&&(DECAP[cap]||cap),capalt:cap?[cap]:[],iso:cca,cc:cca,cont,un:!!c.unMember,pt:[c.latlng[1],c.latlng[0]],mp:1});
   });
   byMap.mpn=all.filter(i=>i.mp).map(i=>i.name);
+  byMap.wall=all.slice();
   all.filter(i=>ISL.has(i.cc)&&i.f).forEach(i=>HIDE.add(i.f));
   byMap.ab=ABI;
   byMap.cde=CITY(CDE,CALT);byMap.cw=CITY(CWT,CALT);
@@ -347,6 +349,25 @@ function mkMap(svg,key,fs,fit){
     const gb=path.bounds(gf),P=[],L=[],ed=new Map(),cells={},ext2={},fx=p=>p[0].toFixed(1)+','+p[1].toFixed(1);
     Object.keys(ZS[key]).forEach(dg=>{cells[dg]=[];ext2[dg]=[1e9,1e9,-1e9,-1e9];ZS[key][dg].forEach(sd=>{P.push(pr(sd));L.push(dg)})});
     const vo=d3.Delaunay.from(P).voronoi([-W,-H,2*W,2*H]);
+    const nb=P.map((q,i)=>[...vo.delaunay.neighbors(i)]);
+    for(let pass=0;pass<2;pass++){
+      const comp=new Array(P.length).fill(-1),comps=[];
+      P.forEach((q,i)=>{
+        if(comp[i]>=0)return;
+        const id=comps.length,st=[i],mem=[];comp[i]=id;
+        while(st.length){const x=st.pop();mem.push(x);nb[x].forEach(y=>{if(comp[y]<0&&L[y]===L[i]){comp[y]=id;st.push(y)}})}
+        comps.push(mem);
+      });
+      const big={};comps.forEach(mm=>{const d=L[mm[0]];if(!big[d]||mm.length>big[d])big[d]=mm.length});
+      comps.forEach(mm=>{
+        const d=L[mm[0]];
+        if(mm.length<=3&&mm.length<big[d]){
+          const cnt={};mm.forEach(x=>nb[x].forEach(y=>{if(L[y]!==d)cnt[L[y]]=(cnt[L[y]]||0)+1}));
+          const best=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
+          if(best)mm.forEach(x=>{L[x]=best});
+        }
+      });
+    }
     P.forEach((q,i)=>{
       const c=vo.cellPolygon(i);if(!c)return;
       cells[L[i]].push(c);const e=ext2[L[i]];
@@ -359,29 +380,43 @@ function mkMap(svg,key,fs,fit){
     });
     bd=[...ed.values()].filter(v=>v.length===2&&v[0][0]!==v[1][0]).map(v=>'M'+fx(v[0][1])+'L'+fx(v[0][2])).join('');
   }
-  /* Einkreisungen für Inselgruppen: gestrichelte Rahmen, die sich nicht überlappen */
-  const bbox=it=>{
-    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-    const add=z=>{if(z){x0=Math.min(x0,z[0]);x1=Math.max(x1,z[0]);y0=Math.min(y0,z[1]);y1=Math.max(y1,z[1])}};
-    if(it.pt)add(pr(it.pt));
-    else(it.f.geometry.type==='Polygon'?[it.f.geometry.coordinates]:it.f.geometry.coordinates).forEach(pl=>pl[0].forEach(c=>add(pr(c))));
-    return[x0,y0,x1,y1];
-  };
+  /* Einkreisungen für Inselgruppen: werden mit dem Zoom enger und überlappen weder einander noch Land */
+  const fbb=new Map(),allF=byMap.bgf.slice();
+  items.forEach(i=>{if(i.f&&!allF.includes(i.f))allF.push(i.f)});
+  allF.forEach(f=>fbb.set(f,path.bounds(f)));
+  const ringPts=f=>{const o=[];(f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates).forEach(pl=>pl[0].forEach(c=>{const z=pr(c);if(z)o.push(z)}));return o};
   const en=items.filter(i=>ENC.has(i.cc)&&(i.f||i.pt)).map(i=>{
-    const[a,b,c,d]=bbox(i),P0=7,mn=18;
-    let x0=a-P0,y0=b-P0,x1=c+P0,y1=d+P0;
-    if(x1-x0<mn){const q=(x0+x1)/2;x0=q-mn/2;x1=q+mn/2}
-    if(y1-y0<mn){const q=(y0+y1)/2;y0=q-mn/2;y1=q+mn/2}
-    return{it:i,r:[x0,y0,x1,y1],core:[a,b,c,d]};
-  }).filter(e=>isFinite(e.r[0])&&isFinite(e.r[3]));
-  for(let n=0;n<10;n++)en.forEach((A,i)=>en.forEach((B,j)=>{
-    if(j<=i)return;
-    const a=A.r,b=B.r,ox=Math.min(a[2],b[2])-Math.max(a[0],b[0]),oy=Math.min(a[3],b[3])-Math.max(a[1],b[1]);
-    if(ox<=0||oy<=0)return;
-    if(ox<=oy){const T=(a[0]+a[2])<(b[0]+b[2])?[A,B]:[B,A];T[0].r[2]=Math.max(T[0].core[2],T[0].r[2]-ox/2-.5);T[1].r[0]=Math.min(T[1].core[0],T[1].r[0]+ox/2+.5)}
-    else{const T=(a[1]+a[3])<(b[1]+b[3])?[A,B]:[B,A];T[0].r[3]=Math.max(T[0].core[3],T[0].r[3]-oy/2-.5);T[1].r[1]=Math.min(T[1].core[1],T[1].r[1]+oy/2+.5)}
-  }));
-  const hsel=g.append('g').selectAll('path').data(en).join('path').attr('d',e=>'M'+e.r[0].toFixed(1)+','+e.r[1].toFixed(1)+'H'+e.r[2].toFixed(1)+'V'+e.r[3].toFixed(1)+'H'+e.r[0].toFixed(1)+'Z').attr('class','hl');
+    const own0=i.f?ringPts(i.f):[pr(i.pt)];
+    const hull=own0.length>2?d3.polygonHull(own0):null;
+    const xs=own0.map(z=>z[0]),ys=own0.map(z=>z[1]),bx=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
+    const hh=hull&&hull.length>2?hull:null,c=hh?d3.polygonCentroid(hh):[(bx[0]+bx[2])/2,(bx[1]+bx[3])/2],M=30,nv=[];
+    allF.forEach(f=>{
+      if(f===i.f)return;
+      const b2=fbb.get(f);
+      if(!b2||b2[1][0]<bx[0]-M||b2[0][0]>bx[2]+M||b2[1][1]<bx[1]-M||b2[0][1]>bx[3]+M)return;
+      ringPts(f).forEach(z=>{if(z[0]>bx[0]-M&&z[0]<bx[2]+M&&z[1]>bx[1]-M&&z[1]<bx[3]+M)nv.push(z)});
+    });
+    return{it:i,hull:hh,c,nv,pad:0,poly:[]};
+  }).filter(e=>isFinite(e.c[0])&&isFinite(e.c[1]));
+  const circle=(c,r0)=>d3.range(16).map(t=>[c[0]+r0*Math.cos(t*Math.PI/8),c[1]+r0*Math.sin(t*Math.PI/8)]);
+  const mkPoly=(e,pad,mR)=>{
+    if(!e.hull)return circle(e.c,Math.max(pad,mR));
+    const out=e.hull.map(z=>{const dx=z[0]-e.c[0],dy=z[1]-e.c[1],l=Math.hypot(dx,dy)||1;return[z[0]+dx/l*pad,z[1]+dy/l*pad]});
+    const R=Math.max(...out.map(z=>Math.hypot(z[0]-e.c[0],z[1]-e.c[1])));
+    if(R<mR){const f=mR/R;return out.map(z=>[e.c[0]+(z[0]-e.c[0])*f,e.c[1]+(z[1]-e.c[1])*f])}
+    return out;
+  };
+  const sat=(A,B)=>{
+    for(const P1 of[A,B])for(let i=0;i<P1.length;i++){
+      const a1=P1[i],b1=P1[(i+1)%P1.length],nx=b1[1]-a1[1],ny=a1[0]-b1[0];
+      let m1=1e9,x1=-1e9,m2=1e9,x2=-1e9;
+      A.forEach(z=>{const v=z[0]*nx+z[1]*ny;m1=Math.min(m1,v);x1=Math.max(x1,v)});
+      B.forEach(z=>{const v=z[0]*nx+z[1]*ny;m2=Math.min(m2,v);x2=Math.max(x2,v)});
+      if(x1<m2||x2<m1)return false;
+    }
+    return true;
+  };
+  const hsel=g.append('g').selectAll('path').data(en).join('path').attr('class','hl');
   const crv=d3.line().curve(d3.curveCatmullRom.alpha(.5));
   const lineD=d=>(d.f.geometry.type==='MultiLineString'?d.f.geometry.coordinates:[d.f.geometry.coordinates]).map(c=>crv(c.map(z=>pr(z)))).join('');
   const lay=g.append('g'),pI=items.filter(i=>!i.pt);
@@ -392,19 +427,39 @@ function mkMap(svg,key,fs,fit){
   const sm=pI.filter(i=>{if(i.ln||i.d||ENC.has(i.cc))return false;const[[x0,y0],[x1,y1]]=path.bounds(i.f),z=Math.max(x1-x0,y1-y0)/dpk;szd.set(i,z);return z<1.9}).concat(mpS);
   const cxy=d=>d.pt?pr(d.pt):path.centroid(d.f);
   const circ=lay.selectAll('circle.sm').data(sm).join('circle').attr('cx',d=>cxy(d)[0]).attr('cy',d=>cxy(d)[1]).attr('r',5).attr('class','c dot sm').attr('data-t','dot');
-  const edots=lay.selectAll('circle.ed').data(en).join('circle').attr('cx',e=>(e.r[0]+e.r[2])/2).attr('cy',e=>(e.r[1]+e.r[3])/2).attr('r',6.5).attr('class','c dot ed').attr('data-t','dot').datum(e=>e.it);
+  const edots=lay.selectAll('circle.ed').data(en).join('circle').attr('r',6.5).attr('class','c dot ed').attr('data-t','dot').datum(e=>e.it);
+  const edn=edots.nodes();
+  const layout=k=>{
+    const P0=Math.max(2,8/Math.sqrt(k))/k,mR=Math.max(4,9/Math.sqrt(k))/k,pmin=.3/k;
+    en.forEach(e=>{e.pad=P0});
+    for(let n=0;n<14;n++){
+      let ch=false;
+      en.forEach(e=>{e.poly=mkPoly(e,e.pad,mR)});
+      en.forEach(e=>{
+        if(e.pad<=pmin)return;
+        if(e.nv.some(z=>d3.polygonContains(e.poly,z))||en.some(o=>o!==e&&sat(e.poly,o.poly))){e.pad=Math.max(pmin,e.pad-.8/k);ch=true}
+      });
+      if(!ch)break;
+    }
+    en.forEach(e=>{e.poly=mkPoly(e,e.pad,mR)});
+    hsel.attr('d',e=>'M'+e.poly.map(z=>z[0].toFixed(1)+','+z[1].toFixed(1)).join('L')+'Z');
+    edn.forEach((nd,i)=>{nd.setAttribute('cx',en[i].c[0]);nd.setAttribute('cy',en[i].c[1])});
+  };
   const ptc=lay.selectAll('circle.pt').data(items.filter(i=>i.pt&&!i.mp)).join('circle').attr('cx',d=>pr(d.pt)[0]).attr('cy',d=>pr(d.pt)[1]).attr('r',5).attr('class','c pt');
   const sel=lay.selectAll('.c');
   if(bd)g.append('g').attr('clip-path','url(#dec)').append('path').attr('d',bd).attr('class','zb');
+  if(bk==='de'&&gf)g.append('path').attr('d',path(gf)).attr('class','gob');
+  let lq=-99;
   const zoom=d3.zoom().scaleExtent([1,40]).extent([[0,0],[W,H]]).translateExtent(ext||[[0,0],[W,H]]).on('zoom',e=>{
     const k=e.transform.k,ppd=k*dpk;
     g.attr('transform',e.transform);g.style('--sw',1/k).style('--lw',3.5/Math.sqrt(k));
     circ.attr('r',5/k).attr('display',d=>ppd>=7.5&&szd.get(d)*ppd<14?null:'none');
     edots.attr('r',6.5/k);ptc.attr('r',5/k);
+    const q=Math.round(Math.log2(k)*3);if(q!==lq){lq=q;layout(k)}
   });
   root.call(zoom).call(zoom.transform,d3.zoomIdentity);
   return{sel,hsel,
-    ease(){const k=d3.zoomTransform(svg).k;if(k>1.05)root.transition().duration(350).call(zoom.scaleTo,1+(k-1)*.3)},
+    ease(){const k=d3.zoomTransform(svg).k;if(k>2.4)root.transition().duration(350).call(zoom.scaleTo,2)},
     reset(){root.transition().duration(300).call(zoom.transform,d3.zoomIdentity)},
     zoomTo(d){
       let cx,cy,k;
@@ -432,7 +487,7 @@ function renderHome(){
   if(!ok(MODES.find(m=>m.k===S.mode)))S.mode=(MODES.find(ok)||MODES[0]).k;
   const cg=MODES.find(m=>m.k===S.mode).g;
   $('#grps').innerHTML=GR.map(g=>'<button class="chip '+(cg===g?'on':'')+'" data-grp="'+g+'" '+(MODES.some(m=>m.g===g&&ok(m))?'':'disabled')+'>'+g+'</button>').join('');
-  $('#maps').innerHTML=Object.entries(MAPS).map(([k,m])=>chip(k,m.n)).join('');
+  $('#maps').innerHTML=Object.entries(MAPS).filter(([k,m])=>!m.ed).map(([k,m])=>chip(k,m.n)).join('');
   $('#qs').innerHTML=QS.length?QS.map(q=>chip('q:'+q.id,q.name,q.ids.length,1)).join(''):'<p class="s">Noch keine eigenen Quizze.</p>';
   $('#diffs').innerHTML=[['n','Normal'],['h','Hard'],['b','Ohne Grenzen']].map(([k,n])=>'<button class="chip '+(S.diff===k?'on':'')+'" data-diff="'+k+'">'+n+'</button>').join('');
   $('#modes').innerHTML=MODES.filter(m=>m.g===cg).map(m=>'<button class="mode '+(S.mode===m.k?'on':'')+'" data-mode="'+m.k+'" '+(ok(m)?'':'disabled')+'><b>'+m.t+'</b><span>'+m.d+'</span></button>').join('');
@@ -489,7 +544,8 @@ $('#edel').onclick=()=>{
 let G=null;
 const WM='https://commons.wikimedia.org/wiki/Special:FilePath/';
 const SUF=['(state)','(with arms)','(with coat of arms)','(Dienstflagge)','(service flag)','(state flag)'];
-const dfl=iso=>{const b=(DEFL[iso.slice(3)]||'x').replace('.svg',''),b0=b.replace(/ \(.*\)$/,''),u=x=>WM+encodeURIComponent(x+'.svg')+'?width=320';return b==='Flag of Berlin'||b==='Flag of Hamburg'?[u(b)]:[...SUF.map(x=>u(b0+' '+x)),u(b)]};
+const DEFX={bw:['Flag of Baden-Württemberg (state, lesser arms)'],hb:['Flag of Bremen (middle arms)']};
+const dfl=iso=>{const c=iso.slice(3),b=(DEFL[c]||'x').replace('.svg',''),b0=b.replace(/ \(.*\)$/,''),u=x=>WM+encodeURIComponent(x+'.svg')+'?width=320';return b==='Flag of Berlin'||b==='Flag of Hamburg'?[u(b)]:[...(DEFX[c]||[]).map(u),...SUF.map(x=>u(b0+' '+x)),u(b)]};
 const FS=iso=>iso.startsWith('de-')?dfl(iso):['https://cdn.jsdelivr.net/npm/flag-icons@7/flags/4x3/'+iso+'.svg','https://flagcdn.com/w320/'+iso+'.png'];
 const emo=iso=>String.fromCodePoint(...[...iso.toUpperCase()].map(c=>127397+c.charCodeAt(0)));
 const flag=(it,big)=>'<img'+(big?' class="big"':'')+' alt="" src="'+FS(it.iso)[0]+'" data-iso="'+it.iso+'" data-n="1" onerror="flagErr(this)">';
@@ -688,7 +744,7 @@ async function load(){
     const bad=R.map((r,i)=>r.status==='rejected'?names[i]+' ('+(r.reason&&r.reason.message||r.reason)+')':'').filter(Boolean);
     if(R[0].status==='rejected'||R[1].status==='rejected')throw new Error(bad.join(', '));
     build(R[0].value,R[1].value,R[2].status==='fulfilled'?R[2].value:{features:[]});
-    $('#note').textContent=(R[2].status==='rejected'?'Deutschlandkarte nicht geladen ('+(R[2].reason&&R[2].reason.message||'')+'). ':'')+(byMap.mpn.length?'Nur als Punkt (fehlt in der Karte): '+byMap.mpn.join(', '):'');
+    $('#note').textContent=(R[2].status==='rejected'?'Deutschlandkarte nicht geladen ('+(R[2].reason&&R[2].reason.message||'')+'). ':'')+(byMap.mpn.length?'Nur als Punkt (zu klein für die Kartendaten): '+byMap.mpn.join(', '):'');
     if(SY.tok)sync().catch(()=>{});
     renderHome();show('home');
   }catch(e){
