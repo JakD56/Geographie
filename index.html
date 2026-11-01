@@ -70,7 +70,8 @@ svg .c.dot{fill:var(--dot);stroke:var(--ink);stroke-width:1px;vector-effect:non-
 svg .c.dot.ok{fill:var(--ok)}svg .c.dot.bad{fill:var(--bad)}svg .c.dot.warn{fill:var(--warn)}svg .c.dot.hint{fill:var(--hint)}
 .gob{display:none;fill:none;stroke:var(--ink);stroke-width:calc(var(--sw,1)*1.4px);pointer-events:none}svg.nb .gob{display:block}
 svg .c.pt{stroke:transparent;stroke-width:16px}
-.fbc{stroke:var(--ink);stroke-width:1px;vector-effect:non-scaling-stroke;pointer-events:none}.fbc.ok{fill:var(--ok)}.fbc.bad{fill:var(--bad)}.fbc.warn{fill:var(--warn)}.fbc.tmp{fill:var(--hint)}
+.fbc{stroke:var(--ink);stroke-width:1px;vector-effect:non-scaling-stroke;pointer-events:none}.fbc.ok{fill:var(--ok)}.fbc.bad{fill:var(--bad)}.fbc.warn{fill:var(--warn)}.fbc.tmp,.fbc.clk{fill:var(--dot)}
+.fbr{fill:rgba(255,255,255,.06);stroke-width:2px;stroke-dasharray:5 3;vector-effect:non-scaling-stroke;pointer-events:none}.fbr.ok{stroke:var(--ok)}.fbr.warn{stroke:var(--warn)}.fbr.bad{stroke:var(--bad)}
 #score{font-size:34px;font-weight:700;margin:20px 0 4px;letter-spacing:-.02em}
 </style>
 </head>
@@ -312,7 +313,7 @@ function fitBox(it){
   return[[Math.max(-180,w-m-px),Math.max(-80,s-m-py)],[Math.min(180,e+m+px),Math.min(84,n+m+py)]];
 }
 const NE1=d3.geoNaturalEarth1Raw;
-const TOL={cde:15,ceu:40,cw:80,de:20,eu:45,world:80,worldx:80,as:80,af:80,na:80,sa:80,oc:80};
+const TOL={cde:25,ceu:65,cw:120,de:30,eu:70,world:120,worldx:120,as:120,af:120,na:120,sa:120,oc:120};
 const ENC=new Set('fj fm ki mh nr pw sb tv to vu ws ag bs bb dm gd jm kn lc vc tt pr mv sc km cv mu st bh mt'.split(' '));
 const BASE={ab:'de',cde:'de',cw:'world',ceu:'eu',zp:'de',zv:'de',za:'de'};
 function mkMap(svg,key,fs,fit,loc){
@@ -486,19 +487,21 @@ function mkMap(svg,key,fs,fit,loc){
   const sel=lay.selectAll('.c');
   if(bd)g.append('g').attr('clip-path','url(#dec)').append('path').attr('d',bd).attr('class','zb');
   if(bk==='de'&&gf)g.append('path').attr('d',path(gf)).attr('class','gob');
-  const fbg=g.append('g');
+  const fbg=g.append('g'),tmpg=g.append('g');
   let lq=-99;
   const zoom=d3.zoom().scaleExtent([1,40]).extent([[0,0],[W,H]]).translateExtent(ext||[[0,0],[W,H]]).on('zoom',e=>{
     const k=e.transform.k,ppd=k*dpk;
     g.attr('transform',e.transform);g.style('--sw',1/k).style('--lw',3.5/Math.sqrt(k));
     circ.attr('r',5/k).attr('display',d=>ppd>=7.5&&szd.get(d)*ppd<14?null:'none');
-    edots.attr('r',6.5/k);ptc.attr('r',5/k);fbg.selectAll('circle').attr('r',6/k);
+    edots.attr('r',6.5/k);ptc.attr('r',5/k);fbg.selectAll('circle').attr('r',6/k);tmpg.selectAll('circle').attr('r',6/k);
     const q=Math.round(Math.log2(k)*3);if(q!==lq){lq=q;layout(k)}
   });
   root.call(zoom).call(zoom.transform,d3.zoomIdentity);
   return{sel,hsel,root,g,pr,
-    mark(ll,cls,tmp){const z=pr(ll);if(!z)return;const c=fbg.append('circle').attr('cx',z[0]).attr('cy',z[1]).attr('r',6/d3.zoomTransform(svg).k).attr('class','fbc '+cls);if(tmp)setTimeout(()=>c.remove(),800)},
+    mark(ll,cls,tmp){const z=pr(ll);if(!z)return;const c=(tmp==='q'?tmpg:fbg).append('circle').attr('cx',z[0]).attr('cy',z[1]).attr('r',6/d3.zoomTransform(svg).k).attr('class','fbc '+cls);if(tmp===true)setTimeout(()=>c.remove(),1000)},
+    ring(ll,km,cls){tmpg.append('path').attr('d',path(d3.geoCircle().center(ll).radius(km/111.195)())).attr('class','fbr '+cls)},
     clearMarks(){fbg.selectAll('circle').remove()},
+    clearTmp(){tmpg.selectAll('*').remove()},
     ease(){const k=d3.zoomTransform(svg).k;if(k>2.4)root.transition().duration(350).call(zoom.scaleTo,2)},
     reset(){root.transition().duration(300).call(zoom.transform,d3.zoomIdentity)},
     zoomTo(d){
@@ -598,13 +601,13 @@ function startGame(items,key,mode,only){
   const mo=MODES.find(m=>m.k===mode);
   const pool=(only||items).filter(i=>(!mo.iso||i.iso)&&(!mo.cap||i.cap)&&(!mo.capll||i.capll)&&(mo.k!=='to'||i.f));
   if(!pool.length)return;
-  G={items,key,mo,q:shuffle(pool),set:new Set(items),diff:S.diff,tol:TOL[key]||80,msg:'',marks:{},sm:S.map,only:!!only,i:0,ok:0,miss:[],tries:0,busy:false,w:key==='de'?'Bundesland':'Land'};
+  G={items,key,mo,q:shuffle(pool),set:new Set(items),diff:S.diff,tol:TOL[key]||110,msg:'',marks:{},sm:S.map,only:!!only,i:0,ok:0,miss:[],tries:0,busy:false,w:key==='de'?'Bundesland':'Land'};
   show('quiz');
   vis($('#qsvg'),!mo.nomap);
   $('#tf').hidden=!mo.k.startsWith('t');
   vis($('#osvg'),mo.k==='to');$('#draw').hidden=mo.k!=='df';
   G.map=mkMap($('#qsvg'),key,(parseFloat(getComputedStyle(document.body).paddingBottom)||0)+16+(mo.k[0]==='t'?112:0)+(mo.k==='cf'?24:0)+(/^tz/.test(mo.k)?50:0),items!==byMap[key]?items:null,!!mo.loc);
-  d3.select('#qsvg').classed('nb',(G.diff==='b'||G.diff==='hb'||mo.loc)&&mo.k!=='ab');
+  d3.select('#qsvg').classed('nb',(G.diff==='b'||G.diff==='hb')&&mo.k!=='ab');
   G.map.sel.on('click',(e,d)=>pick(d));G.map.hsel.on('click',(e,d)=>pick(d.it));
   if(mo.loc)G.map.root.on('click.loc',locClick);
   next();
@@ -616,11 +619,16 @@ function locClick(e){
   if(!ll||!isFinite(ll[0])||!isFinite(ll[1]))return;
   const tgt=G.mo.k==='cl'?G.cur.pt:G.cur.capll,d=kmd(ll,tgt);
   G.msg=Math.round(d)+' km';
-  if(d<=G.tol){const kk=G.tries?'warn':'ok';G.map.mark(tgt,kk);if(!G.tries)G.ok++;prog();adv(900);return}
+  if(d<=G.tol){
+    const kk=G.tries?'warn':'ok';
+    G.map.mark(ll,'clk','q');G.map.mark(tgt,kk);G.map.ring(tgt,G.tol,kk);
+    if(!G.tries)G.ok++;
+    prog();adv(1400);return;
+  }
   G.tries++;
   if(G.tries===1)G.miss.push(G.cur);
-  if(G.tries>=2){G.map.mark(tgt,'bad');prog();adv(1700)}
-  else{G.map.mark(ll,'tmp',true);prog()}
+  if(G.tries>=2){G.map.mark(ll,'clk','q');G.map.mark(tgt,'bad');G.map.ring(tgt,G.tol,'bad');prog();adv(2200)}
+  else{G.map.mark(ll,'clk',true);prog()}
 }
 function prog(){$('#prog').textContent=Math.min(G.i+1,G.q.length)+' / '+G.q.length+' · ✓ '+G.ok+(G.msg?' · '+G.msg:'')}
 function next(f){
@@ -628,7 +636,7 @@ function next(f){
   const it=G.cur=G.q[G.i],k=G.mo.k;
   if(G.i>0&&k[0]==='c')G.map.ease();
   G.tries=0;G.busy=false;G.done=false;G.msg='';
-  if(G.mo.loc&&(G.diff==='h'||G.diff==='hb'))G.map.clearMarks();
+  if(G.mo.loc){G.map.clearTmp();if(G.diff==='h'||G.diff==='hb')G.map.clearMarks()}
   G.map.sel.attr('class',function(d){return 'c'+(this.dataset.t?' '+this.dataset.t:'')+(d.ln?' ln':'')+(d.pt?' pt':'')+(d.d?' zn':'')+(G.set.has(d)?'':' dim')+(G.diff!=='h'&&G.diff!=='hb'&&G.marks[d.id]?' '+G.marks[d.id]:'')});
   $('#prompt').innerHTML=
     k==='cl'?'Wo liegt <b>'+esc(it.name)+'</b>?':
